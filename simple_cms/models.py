@@ -1,0 +1,186 @@
+from django.db import models
+from django.utils.safestring import mark_safe
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes import generic
+
+from django_extensions.db.fields import CreationDateTimeField
+from django_extensions.db.fields import ModificationDateTimeField
+from django_extensions.db.fields import AutoSlugField
+
+from positions.fields import PositionField
+
+class CommonAbstractManager(models.Manager):
+
+    def get_active(self):
+        return self.get_query_set().filter(active=True)
+
+class CommonAbstractModel(models.Model):
+    """
+    Common ABC for most models.
+    Provides created/updated_at, and active/inactive status.
+    """
+    created_at = CreationDateTimeField()
+    updated_at = ModificationDateTimeField()
+    active = models.BooleanField(default=True, verbose_name="published")
+    objects = CommonAbstractManager()
+
+    class Meta:
+        get_latest_by = 'updated_at'
+        ordering = ('-updated_at', '-created_at')
+        abstract = True
+    
+    def get_class_name(self):
+        return self.__class__.__name__
+
+
+class NavigationGroup(models.Model):
+    title = models.CharField(max_length=255)
+    
+    class Meta:
+        ordering = ('title',)
+    
+    def __unicode__(self):
+        return self.title
+
+class Navigation(CommonAbstractModel):
+    """
+    Navigation and Page combined model
+    Do customizations as one-to-one or don't add app and subclass model instead, not sure
+    - language
+    - site
+    - header image (could be done with Block relationship based on BlockGroup)
+    - etc, etc
+    """
+    title = models.CharField(max_length=255)
+    slug = AutoSlugField(editable=True, populate_from='title')
+    group = models.ForeignKey(NavigationGroup, blank=True, null=True)
+    parent = models.ForeignKey('self', blank=True, null=True, related_name='children')
+    order = PositionField(collection='parent')
+    homepage = models.BooleanField(default=False)
+    url = models.CharField(max_length=255, blank=True, default='', help_text='eg. link somewhere else http://awesome.com/ or /awesome/page/')
+    target = models.CharField(max_length=255, blank=True, default='', help_text='eg. open link in "_blank" window')
+    page_title = models.CharField(max_length=255, blank=True, default='', help_text='Optional html title')
+    text = models.TextField(blank=True, default='')
+    format = models.CharField(max_length=255, blank=True, default='', choices=(
+        ('markdown', 'markdown'),
+        ('textile', 'textile'),
+        ('restructuredtext', 'restructuredtext')
+    ))
+    render_as_template = models.BooleanField(default=False)
+    template = models.CharField(max_length=255, blank=True, default='', help_text='Eg. common/awesome.html')
+    view = models.CharField(max_length=255, blank=True, default='', help_text='Eg. common.views.awesome')
+    seo_title = models.CharField(max_length=255, blank=True, default='', help_text='Complete html title replacement')
+    seo_description = models.TextField(blank=True, default='')
+    seo_keywords = models.TextField(blank=True, default='')
+    
+    # publish_start
+    # publish_end
+    
+    # blocks = models.ManyToManyField('simple_cms.Block', through='NavigationBlocks', blank=True)
+    inherit_blocks = models.BooleanField(default=True, verbose_name="Inherit Blocks")
+
+    class Meta:
+        ordering = ['title']
+        verbose_name_plural = 'Navigation'
+
+    def __unicode__(self):
+        return self._chain()
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.parent == self:
+            raise ValidationError('Can\'t set parent to self.')
+
+    def get_title(self):
+        if self.page_title:
+            return self.page_title
+        return self.title
+
+    def _chain(self, prop='title'):
+        """ Create slug chain for an object and its parent(s). """
+        item = self
+        tA = [getattr(item, prop)]
+        while item.parent:
+            item = item.parent
+            tA.append(getattr(item, prop))
+        else:
+            pass
+        tA.reverse()
+        return '/'.join(['%s' % name for name in tA])
+
+    def get_absolute_url(self):
+        if self.url:
+            return self.url
+        return mark_safe('/%s/' % self._chain('slug'))
+
+    @property
+    def href(self):
+        r = ''
+        if self.target:
+            r = r+'target="%s"' % self.target
+        if self.url:
+            r = r+'href="%s"' % self.url
+            return mark_safe(r)
+        r = r+'href="/%s/"' % self._chain('slug')
+        return mark_safe(r)
+
+    @property
+    def depth(self):
+        depth = 0
+        item = self
+        while item.parent:
+            item = item.parent
+            depth += 1
+        else:
+            pass
+        return depth
+
+    @property
+    def search_description(self):
+        return self.text
+
+
+class BlockGroup(models.Model):
+    title = models.CharField(max_length=255)
+    
+    class Meta:
+        ordering = ('title',)
+    
+    def __unicode__(self):
+        return self.title
+
+
+class Block(CommonAbstractModel):
+    key = models.CharField(max_length=255, help_text='Internal name to refer to this item')
+    title = models.CharField(max_length=255, blank=True, help_text='Optional header on sidebar')
+    text = models.TextField(blank=True, default='')
+    format = models.CharField(max_length=255, blank=True, default='', choices=(
+        ('markdown', 'markdown'),
+        ('textile', 'textile'),
+        ('restructuredtext', 'restructuredtext')
+    ))
+    render_as_template = models.BooleanField(default=False)
+    image = models.ImageField(upload_to='uploads/contentblocks/', blank=True, default='', help_text='Optional image')
+    content_type = models.ForeignKey(ContentType, blank=True, null=True, help_text="""Choose an existing item type.<br>The most common choices will be Expert, etc.""")
+    object_id = models.PositiveIntegerField(blank=True, null=True, help_text="""Type in the ID of the item you want to choose. You should see the title appear beside the box.""")
+    content_object = generic.GenericForeignKey('content_type', 'object_id')
+    
+    def __unicode__(self):
+        return self.key
+
+
+class NavigationBlocks(CommonAbstractModel):
+    """ Linking Navigation pages with Blocks. """
+    navigation = models.ForeignKey('simple_cms.Navigation')
+    block = models.ForeignKey('simple_cms.Block')
+    group = models.ForeignKey('simple_cms.BlockGroup', blank=True, null=True)
+    order = PositionField(collection=('navigation', 'group'))
+
+    class Meta:
+        ordering = ['order', ]
+        verbose_name = "Navigation Block"
+        verbose_name_plural = "Navigation Blocks"
+
+    def __unicode__(self):
+        return '%s - %s' % (self.navigation, self.block)
+
