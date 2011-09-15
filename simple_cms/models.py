@@ -9,6 +9,13 @@ from django_extensions.db.fields import AutoSlugField
 
 from positions.fields import PositionField
 
+FORMAT_CHOICES = (
+    ('html', 'html'),
+    ('markdown', 'markdown'),
+    ('textile', 'textile'),
+    ('restructuredtext', 'restructuredtext')
+)
+
 class CommonAbstractManager(models.Manager):
 
     def get_active(self):
@@ -70,11 +77,7 @@ class Navigation(TextMixin, CommonAbstractModel):
     target = models.CharField(max_length=255, blank=True, default='', help_text='eg. open link in "_blank" window')
     page_title = models.CharField(max_length=255, blank=True, default='', help_text='Optional html title')
     text = models.TextField(blank=True, default='')
-    format = models.CharField(max_length=255, blank=True, default='', choices=(
-        ('markdown', 'markdown'),
-        ('textile', 'textile'),
-        ('restructuredtext', 'restructuredtext')
-    ))
+    format = models.CharField(max_length=255, blank=True, default='', choices=FORMAT_CHOICES)
     render_as_template = models.BooleanField(default=False)
     template = models.CharField(max_length=255, blank=True, default='', help_text='Eg. common/awesome.html')
     view = models.CharField(max_length=255, blank=True, default='', help_text='Eg. common.views.awesome')
@@ -163,11 +166,7 @@ class Block(TextMixin, CommonAbstractModel):
     key = models.CharField(max_length=255, help_text='Internal name to refer to this item')
     title = models.CharField(max_length=255, blank=True, help_text='Optional header on sidebar')
     text = models.TextField(blank=True, default='')
-    format = models.CharField(max_length=255, blank=True, default='', choices=(
-        ('markdown', 'markdown'),
-        ('textile', 'textile'),
-        ('restructuredtext', 'restructuredtext')
-    ))
+    format = models.CharField(max_length=255, blank=True, default='', choices=FORMAT_CHOICES)
     render_as_template = models.BooleanField(default=False)
     image = models.ImageField(upload_to='uploads/contentblocks/', blank=True, default='', help_text='Optional image')
     content_type = models.ForeignKey(ContentType, blank=True, null=True, help_text="""Choose an existing item type.<br>The most common choices will be Expert, etc.""")
