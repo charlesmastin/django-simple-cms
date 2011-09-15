@@ -12,6 +12,7 @@ class NavigationAdmin(admin.ModelAdmin):
     save_on_top = True
     prepopulated_fields = {'slug': ('title',)}
     inlines = [BlockInline]
+    search_fields = ['title', 'text']
     fieldsets = (
         (None, {
             'fields': (

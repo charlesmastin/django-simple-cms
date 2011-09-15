@@ -14,6 +14,15 @@ class CommonAbstractManager(models.Manager):
     def get_active(self):
         return self.get_query_set().filter(active=True)
 
+
+class TextMixin(object):
+    def get_text_block(self):
+        return {
+            'text': self.text,
+            'format': self.format,
+            'render_as_template': self.render_as_template,
+        }
+
 class CommonAbstractModel(models.Model):
     """
     Common ABC for most models.
@@ -42,7 +51,7 @@ class NavigationGroup(models.Model):
     def __unicode__(self):
         return self.title
 
-class Navigation(CommonAbstractModel):
+class Navigation(TextMixin, CommonAbstractModel):
     """
     Navigation and Page combined model
     Do customizations as one-to-one or don't add app and subclass model instead, not sure
@@ -150,7 +159,7 @@ class BlockGroup(models.Model):
         return self.title
 
 
-class Block(CommonAbstractModel):
+class Block(TextMixin, CommonAbstractModel):
     key = models.CharField(max_length=255, help_text='Internal name to refer to this item')
     title = models.CharField(max_length=255, blank=True, help_text='Optional header on sidebar')
     text = models.TextField(blank=True, default='')
