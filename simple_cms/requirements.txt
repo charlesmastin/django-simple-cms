@@ -1,4 +1,0 @@
-django
-django-extensions
-PIL
--e git+git://github.com/jpwatts/django-positions.git#egg=django-positions
