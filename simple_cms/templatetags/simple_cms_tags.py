@@ -134,3 +134,66 @@ def path_in_url(parser, token):
         raise template.TemplateSyntaxError, "%r tag requires arguments" % \
                 token.contents.split()[0]
     return PathNode(args[1], args[3])
+
+
+class NavigationBlocksNode(template.Node):
+    
+    def __init__(self, nav_item, var_name, group_name=''):
+        self.nav_item = template.Variable(nav_item)
+        self.var_name = var_name
+        self.group_name = None
+        if group_name != '':
+            self.group_name = template.Variable(group_name)
+    
+    def render(self, context):
+        blocks = None
+        nav = self.nav_item.resolve(context)
+        # spin this off into a separate template tag perhaps
+        # we could just filter it all out afterwards, but heck, do 2 optimized queries
+        # dynamic args, yo, easy peazy
+        
+        if self.group_name:
+            group = self.group_name.resolve(context)
+            blocks = [block.block for block in nav.navigationblocks_set.filter(active=True, group__title=group)]
+            if nav.inherit_blocks:
+                while nav.parent:
+                    nav = nav.parent
+                    for block in nav.navigationblocks_set.filter(active=True, group__title=group):
+                        blocks.append(block.block)
+                    if not nav.inherit_blocks:
+                        break
+        
+        else:
+            blocks = [block.block for block in nav.navigationblocks_set.filter(active=True)]
+            if nav.inherit_blocks:
+                while nav.parent:
+                    nav = nav.parent
+                    for block in nav.navigationblocks_set.filter(active=True):
+                        blocks.append(block.block)
+                    if not nav.inherit_blocks:
+                        break
+        
+        context[self.var_name] = blocks
+        return ''
+
+
+@register.tag
+def get_blocks(parser, token):
+    """
+    Tag should be called like so:
+        {% get_blocks for <nav object> [<group string>] as <variable> %}
+    """
+    try:
+        tag_name, arg = token.contents.split(None, 1)
+    except ValueError:
+        raise template.TemplateSyntaxError, "%r tag requires arguments" % \
+                token.contents.split()[0]
+    bits = arg.split()
+    len_bits = len(bits)
+    if len_bits == 5:
+        return NavigationBlocksNode(bits[1], bits[4], bits[2])
+    if len_bits == 4:
+        return NavigationBlocksNode(bits[1], bits[3])
+    
+    raise TemplateSyntaxError, "get_blocks for nav [group] as varname"
+    

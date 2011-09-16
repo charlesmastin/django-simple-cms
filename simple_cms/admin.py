@@ -30,6 +30,7 @@ class NavigationAdmin(admin.ModelAdmin):
                 'seo_description',
                 'seo_keywords',
                 'page_title',
+                'homepage',
                 'inherit_blocks',
                 'render_as_template',
                 ('url', 'target'),
