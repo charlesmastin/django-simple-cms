@@ -103,6 +103,12 @@ class Navigation(TextMixin, CommonAbstractModel):
         if self.parent == self:
             raise ValidationError('Can\'t set parent to self.')
 
+    def root(self):
+        item = self
+        while item.parent:
+            item = item.parent
+        return item
+
     def get_title(self):
         if self.page_title:
             return self.page_title
