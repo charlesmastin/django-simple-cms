@@ -26,12 +26,13 @@ setup(
     ],
     packages=find_packages(),
     zip_safe=False,
+    dependency_links = [
+        'https://github.com/jpwatts/django-positions/tarball/master#egg=django-positions',
+    ],
     install_requires=[
         'django',
         'django-extensions',
         'PIL',
+        'django-positions',
     ],
-    dependency_links = [
-        'https://github.com/jpwatts/django-positions/tarball/master#egg=postions',
-    ]
 )
