@@ -37,11 +37,10 @@ class BlockNode(template.Node):
     
     def render(self, context):
         try:
-            c = Block.objects.get(key=self.key.resolve(context))
-            content = c.content
+            block = Block.objects.get(key=self.key.resolve(context))
         except Block.DoesNotExist:
-            content = ''
-        context[self.var_name] = content
+            block = None
+        context[self.var_name] = block
         return ''
 
 
