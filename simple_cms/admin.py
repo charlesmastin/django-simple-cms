@@ -60,7 +60,19 @@ class BlockAdmin(admin.ModelAdmin):
         }),
     )
 
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ['title', 'parent', 'order', 'active']
+    list_filter = ['active']
+
+
+class ArticleAdmin(admin.ModelAdmin):
+    list_display = ['title', 'publish_date', 'active']
+    list_filter = ['active', 'publish_date']
+    date_hierarchy = 'publish_date'
+
 admin.site.register(Block, BlockAdmin)
 admin.site.register(BlockGroup)
 admin.site.register(NavigationGroup)
 admin.site.register(Navigation, NavigationAdmin)
+admin.site.register(Article, ArticleAdmin)
+admin.site.register(Category, CategoryAdmin)

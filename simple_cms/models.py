@@ -2,10 +2,13 @@ from django.db import models
 from django.utils.safestring import mark_safe
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
+from django.contrib.auth.models import User
 
 from django_extensions.db.fields import CreationDateTimeField
 from django_extensions.db.fields import ModificationDateTimeField
 from django_extensions.db.fields import AutoSlugField
+
+from taggit.managers import TaggableManager
 
 from positions.fields import PositionField
 
@@ -198,3 +201,38 @@ class NavigationBlocks(CommonAbstractModel):
     def __unicode__(self):
         return '%s - %s' % (self.navigation, self.block)
 
+
+class Category(CommonAbstractModel):
+    title = models.CharField(max_length=255)
+    slug = AutoSlugField(editable=True, populate_from='title')
+    order = PositionField(collection='parent')
+    parent = models.ForeignKey('self', blank=True, null=True)
+    
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Category'
+        verbose_name_plural = 'Categories'
+    
+    def __unicode__(self):
+        return self.title
+
+
+class Article(CommonAbstractModel):
+    title = models.CharField(max_length=255)
+    slug = AutoSlugField(editable=True, populate_from='title')
+    post_date = models.DateTimeField(editable=True)
+    text = models.TextField()
+    excerpt = models.TextField(blank=True, default='')
+    key_image = models.ImageField(upload_to='uploads/blog/', blank=True, default='')
+    display_image = models.BooleanField(default=True, blank=True, help_text='Display image on post detail?')
+    tags = TaggableManager(blank=True)
+    categories = models.ManyToManyField('simple_cms.Category', blank=True, related_name='articles')
+    allow_comments = models.BooleanField(default=True)
+    author = models.ForeignKey(User, blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-post_date']
+    
+    def __unicode__(self):
+        return self.title
+    
