@@ -63,12 +63,14 @@ class BlockAdmin(admin.ModelAdmin):
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ['title', 'parent', 'order', 'active']
     list_filter = ['active']
+    prepopulated_fields = {'slug': ('title',)}
 
 
 class ArticleAdmin(admin.ModelAdmin):
     list_display = ['title', 'post_date', 'active']
     list_filter = ['active', 'post_date']
     date_hierarchy = 'post_date'
+    prepopulated_fields = {'slug': ('title',)}
 
 admin.site.register(Block, BlockAdmin)
 admin.site.register(BlockGroup)
