@@ -66,8 +66,8 @@ class CategoryAdmin(admin.ModelAdmin):
 
 
 class ArticleAdmin(admin.ModelAdmin):
-    list_display = ['title', 'publish_date', 'active']
-    list_filter = ['active', 'publish_date']
+    list_display = ['title', 'post_date', 'active']
+    list_filter = ['active', 'post_date']
     date_hierarchy = 'publish_date'
 
 admin.site.register(Block, BlockAdmin)
