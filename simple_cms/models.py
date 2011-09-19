@@ -238,3 +238,11 @@ class Article(TextMixin, CommonAbstractModel):
     def __unicode__(self):
         return self.title
     
+    def has_excerpt(self):
+        if self.excerpt != '':
+            return '<img src="/media/img/admin/icon-yes.gif" alt="True">'
+        return '<img src="/media/img/admin/icon-no.gif" alt="False">'
+    
+    has_excerpt.admin_order_field = 'excerpt'
+    has_excerpt.allow_tags = True
+    

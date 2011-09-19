@@ -66,11 +66,18 @@ class CategoryAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('title',)}
 
 
+class CategoryInline(admin.TabularInline):
+    model = Article.categories.through
+    extra = 0
+
 class ArticleAdmin(admin.ModelAdmin):
-    list_display = ['title', 'post_date', 'active']
+    list_display = ['title', 'post_date', 'has_excerpt', 'active']
     list_filter = ['active', 'post_date']
     date_hierarchy = 'post_date'
     prepopulated_fields = {'slug': ('title',)}
+    save_on_top = True
+    exclude = ['categories']
+    inlines = [CategoryInline]
 
 admin.site.register(Block, BlockAdmin)
 admin.site.register(BlockGroup)
