@@ -13,7 +13,7 @@ class NavigationHelper(object):
     
     def is_homepage(self):
         try:
-            if urlA[0] == '':
+            if self.urlA[0] == '':
                 try:
                     self.page = Navigation.objects.get(active=True, homepage=True)
                     return True
