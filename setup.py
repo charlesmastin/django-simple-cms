@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 
-from setuptools import setup, find_packages
+import sys
+
+try:
+    from setuptools import setup, find_packages, Command
+except ImportError:
+    from ez_setup import use_setuptools
+    use_setuptools()
+    from setuptools import setup, find_packages, Command
 
 setup(
     name='django-simple-cms',
@@ -19,4 +26,13 @@ setup(
     ],
     packages=find_packages(),
     zip_safe=False,
+    dependency_links = [
+        'https://github.com/jpwatts/django-positions/tarball/master#egg=django-positions',
+    ],
+    install_requires=[
+        'django',
+        'django-extensions',
+        'PIL',
+        'django-positions',
+    ],
 )
