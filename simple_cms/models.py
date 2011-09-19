@@ -217,11 +217,13 @@ class Category(CommonAbstractModel):
         return self.title
 
 
-class Article(CommonAbstractModel):
+class Article(TextMixin, CommonAbstractModel):
     title = models.CharField(max_length=255)
     slug = AutoSlugField(editable=True, populate_from='title')
     post_date = models.DateTimeField(editable=True)
     text = models.TextField()
+    format = models.CharField(max_length=255, blank=True, default='', choices=FORMAT_CHOICES)
+    render_as_template = models.BooleanField(default=False)
     excerpt = models.TextField(blank=True, default='')
     key_image = models.ImageField(upload_to='uploads/blog/', blank=True, default='')
     display_image = models.BooleanField(default=True, blank=True, help_text='Display image on post detail?')
