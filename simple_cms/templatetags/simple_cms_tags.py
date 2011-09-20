@@ -150,28 +150,29 @@ class NavigationBlocksNode(template.Node):
         # spin this off into a separate template tag perhaps
         # we could just filter it all out afterwards, but heck, do 2 optimized queries
         # dynamic args, yo, easy peazy
-        
-        if self.group_name:
-            group = self.group_name.resolve(context)
-            blocks = [block.block for block in nav.navigationblocks_set.filter(active=True, group__title=group)]
-            if nav.inherit_blocks:
-                while nav.parent:
-                    nav = nav.parent
-                    for block in nav.navigationblocks_set.filter(active=True, group__title=group):
-                        blocks.append(block.block)
-                    if not nav.inherit_blocks:
-                        break
-        
-        else:
-            blocks = [block.block for block in nav.navigationblocks_set.filter(active=True)]
-            if nav.inherit_blocks:
-                while nav.parent:
-                    nav = nav.parent
-                    for block in nav.navigationblocks_set.filter(active=True):
-                        blocks.append(block.block)
-                    if not nav.inherit_blocks:
-                        break
-        
+        try:
+            if self.group_name:
+                group = self.group_name.resolve(context)
+                blocks = [block.block for block in nav.navigationblocks_set.filter(active=True, group__title=group)]
+                if nav.inherit_blocks:
+                    while nav.parent:
+                        nav = nav.parent
+                        for block in nav.navigationblocks_set.filter(active=True, group__title=group):
+                            blocks.append(block.block)
+                        if not nav.inherit_blocks:
+                            break
+            
+            else:
+                blocks = [block.block for block in nav.navigationblocks_set.filter(active=True)]
+                if nav.inherit_blocks:
+                    while nav.parent:
+                        nav = nav.parent
+                        for block in nav.navigationblocks_set.filter(active=True):
+                            blocks.append(block.block)
+                        if not nav.inherit_blocks:
+                            break
+        except:
+            pass
         context[self.var_name] = blocks
         return ''
 
