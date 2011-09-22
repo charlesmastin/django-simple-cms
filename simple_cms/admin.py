@@ -18,7 +18,7 @@ class NavigationForm(forms.ModelForm):
 class NavigationAdmin(admin.ModelAdmin):
     form = NavigationForm
     list_display = ['title', 'parent', 'order', 'slug', 'group', 'blocks', 'view', 'active']
-    list_filter = ['group', 'active']
+    list_filter = ['group', 'site__name', 'active']
     save_on_top = True
     prepopulated_fields = {'slug': ('title',)}
     inlines = [BlockInline]
