@@ -19,6 +19,7 @@ class NavigationAdmin(admin.ModelAdmin):
                 'active',
                 ('title', 'slug'),
                 ('group', 'parent', 'order'),
+                'site',
                 'text',
                 'format',
             ),

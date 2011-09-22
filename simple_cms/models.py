@@ -3,6 +3,7 @@ from django.utils.safestring import mark_safe
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
 
 from django_extensions.db.fields import CreationDateTimeField
 from django_extensions.db.fields import ModificationDateTimeField
@@ -64,17 +65,14 @@ class NavigationGroup(models.Model):
 class Navigation(TextMixin, CommonAbstractModel):
     """
     Navigation and Page combined model
-    Do customizations as one-to-one or don't add app and subclass model instead, not sure
-    - language
-    - site
-    - header image (could be done with Block relationship based on BlockGroup)
-    - etc, etc
+    Customizations on One-To-One in implementing app
     """
     title = models.CharField(max_length=255)
     slug = AutoSlugField(editable=True, populate_from='title')
     group = models.ForeignKey(NavigationGroup, blank=True, null=True)
     parent = models.ForeignKey('self', blank=True, null=True, related_name='children')
     order = PositionField(collection='parent')
+    site = models.ForeignKey(Site, related_name='pages')
     homepage = models.BooleanField(default=False)
     url = models.CharField(max_length=255, blank=True, default='', help_text='eg. link somewhere else http://awesome.com/ or /awesome/page/')
     target = models.CharField(max_length=255, blank=True, default='', help_text='eg. open link in "_blank" window')
@@ -87,15 +85,11 @@ class Navigation(TextMixin, CommonAbstractModel):
     seo_title = models.CharField(max_length=255, blank=True, default='', help_text='Complete html title replacement')
     seo_description = models.TextField(blank=True, default='')
     seo_keywords = models.TextField(blank=True, default='')
-    
-    # publish_start
-    # publish_end
-    
-    # blocks = models.ManyToManyField('simple_cms.Block', through='NavigationBlocks', blank=True)
     inherit_blocks = models.BooleanField(default=True, verbose_name="Inherit Blocks")
 
     class Meta:
-        ordering = ['title']
+        unique_together = (('site', 'slug', 'parent'),)
+        ordering = ['site', 'title']
         verbose_name_plural = 'Navigation'
 
     def __unicode__(self):
@@ -133,6 +127,9 @@ class Navigation(TextMixin, CommonAbstractModel):
         if self.url:
             return self.url
         return mark_safe('/%s/' % self._chain('slug'))
+
+    def get_children(self):
+        return self.children.all().filter(active=True).order_by('order')
 
     @property
     def href(self):
