@@ -103,6 +103,12 @@ class Navigation(TextMixin, CommonAbstractModel):
         if self.parent == self:
             raise ValidationError('Can\'t set parent to self.')
 
+    def blocks(self):
+        l = len(self.navigationblocks_set.all())
+        if l:
+            return l
+        return ''
+
     def root(self):
         item = self
         while item.parent:
