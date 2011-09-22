@@ -29,6 +29,7 @@ class NavigationAdmin(admin.ModelAdmin):
                 'active',
                 ('title', 'slug'),
                 ('group', 'parent', 'order'),
+                'site',
                 'text',
                 'format',
             ),
@@ -73,7 +74,28 @@ class BlockAdmin(admin.ModelAdmin):
         }),
     )
 
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ['title', 'parent', 'order', 'active']
+    list_filter = ['active']
+    prepopulated_fields = {'slug': ('title',)}
+
+
+class CategoryInline(admin.TabularInline):
+    model = Article.categories.through
+    extra = 0
+
+class ArticleAdmin(admin.ModelAdmin):
+    list_display = ['title', 'post_date', 'has_excerpt', 'active']
+    list_filter = ['active', 'post_date']
+    date_hierarchy = 'post_date'
+    prepopulated_fields = {'slug': ('title',)}
+    save_on_top = True
+    exclude = ['categories']
+    inlines = [CategoryInline]
+
 admin.site.register(Block, BlockAdmin)
 admin.site.register(BlockGroup)
 admin.site.register(NavigationGroup)
 admin.site.register(Navigation, NavigationAdmin)
+admin.site.register(Article, ArticleAdmin)
+admin.site.register(Category, CategoryAdmin)

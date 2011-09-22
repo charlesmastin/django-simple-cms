@@ -1,6 +1,6 @@
-
 from django import template
 from django.template import Node
+from django.contrib.sites.models import Site
 
 from simple_cms.models import Navigation, Block
 
@@ -13,8 +13,7 @@ class NavNode(template.Node):
         self.var_name = var_name
     
     def render(self, context):
-        # look it up
-        nav = Navigation.objects.get_active().filter(group__title=self.group.resolve(context)).order_by('order')
+        nav = Navigation.objects.get_active().filter(site=Site.objects.get_current(), group__title=self.group.resolve(context)).order_by('order')
         context[self.var_name] = nav
         return ''
 
@@ -77,6 +76,32 @@ class SplitListNode(template.Node):
     def render(self, context):
         context[self.new_list_name] = self.split_seq(context[self.list], int(self.chunk_size))
         return ''
+
+
+# http://brandonkonkle.com/blog/2010/may/26/snippet-django-columns-filter/
+@register.filter
+def columns(lst, cols):
+    """
+    Break a list into ``n`` lists, typically for use in columns.
+    
+    >>> lst = range(10)
+    >>> for list in columns(lst, 3):
+    ...     list
+    [0, 1, 2, 3]
+    [4, 5, 6]
+    [7, 8, 9]
+    """
+    try:
+        cols = int(cols)
+        lst = list(lst)
+    except (ValueError, TypeError):
+        raise StopIteration()
+    
+    start = 0
+    for i in xrange(cols):
+        stop = start + len(lst[i::cols])
+        yield lst[start:stop]
+        start = stop
 
 
 @register.tag
@@ -150,28 +175,29 @@ class NavigationBlocksNode(template.Node):
         # spin this off into a separate template tag perhaps
         # we could just filter it all out afterwards, but heck, do 2 optimized queries
         # dynamic args, yo, easy peazy
-        
-        if self.group_name:
-            group = self.group_name.resolve(context)
-            blocks = [block.block for block in nav.navigationblocks_set.filter(active=True, group__title=group)]
-            if nav.inherit_blocks:
-                while nav.parent:
-                    nav = nav.parent
-                    for block in nav.navigationblocks_set.filter(active=True, group__title=group):
-                        blocks.append(block.block)
-                    if not nav.inherit_blocks:
-                        break
-        
-        else:
-            blocks = [block.block for block in nav.navigationblocks_set.filter(active=True)]
-            if nav.inherit_blocks:
-                while nav.parent:
-                    nav = nav.parent
-                    for block in nav.navigationblocks_set.filter(active=True):
-                        blocks.append(block.block)
-                    if not nav.inherit_blocks:
-                        break
-        
+        try:
+            if self.group_name:
+                group = self.group_name.resolve(context)
+                blocks = [block.block for block in nav.navigationblocks_set.filter(active=True, group__title=group)]
+                if nav.inherit_blocks:
+                    while nav.parent:
+                        nav = nav.parent
+                        for block in nav.navigationblocks_set.filter(active=True, group__title=group):
+                            blocks.append(block.block)
+                        if not nav.inherit_blocks:
+                            break
+            
+            else:
+                blocks = [block.block for block in nav.navigationblocks_set.filter(active=True)]
+                if nav.inherit_blocks:
+                    while nav.parent:
+                        nav = nav.parent
+                        for block in nav.navigationblocks_set.filter(active=True):
+                            blocks.append(block.block)
+                        if not nav.inherit_blocks:
+                            break
+        except:
+            pass
         context[self.var_name] = blocks
         return ''
 

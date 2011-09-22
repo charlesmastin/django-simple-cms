@@ -2,10 +2,14 @@ from django.db import models
 from django.utils.safestring import mark_safe
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
+from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
 
 from django_extensions.db.fields import CreationDateTimeField
 from django_extensions.db.fields import ModificationDateTimeField
 from django_extensions.db.fields import AutoSlugField
+
+from taggit.managers import TaggableManager
 
 from positions.fields import PositionField
 
@@ -61,17 +65,14 @@ class NavigationGroup(models.Model):
 class Navigation(TextMixin, CommonAbstractModel):
     """
     Navigation and Page combined model
-    Do customizations as one-to-one or don't add app and subclass model instead, not sure
-    - language
-    - site
-    - header image (could be done with Block relationship based on BlockGroup)
-    - etc, etc
+    Customizations on One-To-One in implementing app
     """
     title = models.CharField(max_length=255)
     slug = AutoSlugField(editable=True, populate_from='title')
     group = models.ForeignKey(NavigationGroup, blank=True, null=True)
     parent = models.ForeignKey('self', blank=True, null=True, related_name='children')
     order = PositionField(collection='parent')
+    site = models.ForeignKey(Site, related_name='pages')
     homepage = models.BooleanField(default=False)
     url = models.CharField(max_length=255, blank=True, default='', help_text='eg. link somewhere else http://awesome.com/ or /awesome/page/')
     target = models.CharField(max_length=255, blank=True, default='', help_text='eg. open link in "_blank" window')
@@ -84,15 +85,11 @@ class Navigation(TextMixin, CommonAbstractModel):
     seo_title = models.CharField(max_length=255, blank=True, default='', help_text='Complete html title replacement')
     seo_description = models.TextField(blank=True, default='')
     seo_keywords = models.TextField(blank=True, default='')
-    
-    # publish_start
-    # publish_end
-    
-    # blocks = models.ManyToManyField('simple_cms.Block', through='NavigationBlocks', blank=True)
     inherit_blocks = models.BooleanField(default=True, verbose_name="Inherit Blocks")
 
     class Meta:
-        ordering = ['title']
+        unique_together = (('site', 'slug', 'parent'),)
+        ordering = ['site', 'title']
         verbose_name_plural = 'Navigation'
 
     def __unicode__(self):
@@ -136,6 +133,9 @@ class Navigation(TextMixin, CommonAbstractModel):
         if self.url:
             return self.url
         return mark_safe('/%s/' % self._chain('slug'))
+
+    def get_children(self):
+        return self.children.all().filter(active=True).order_by('order')
 
     @property
     def href(self):
@@ -204,3 +204,48 @@ class NavigationBlocks(CommonAbstractModel):
     def __unicode__(self):
         return '%s - %s' % (self.navigation, self.block)
 
+
+class Category(CommonAbstractModel):
+    title = models.CharField(max_length=255)
+    slug = AutoSlugField(editable=True, populate_from='title')
+    order = PositionField(collection='parent')
+    parent = models.ForeignKey('self', blank=True, null=True)
+    
+    class Meta:
+        ordering = ['title']
+        verbose_name = 'Category'
+        verbose_name_plural = 'Categories'
+    
+    def __unicode__(self):
+        return self.title
+
+
+class Article(TextMixin, CommonAbstractModel):
+    title = models.CharField(max_length=255)
+    slug = AutoSlugField(editable=True, populate_from='title')
+    post_date = models.DateTimeField(editable=True)
+    text = models.TextField()
+    format = models.CharField(max_length=255, blank=True, default='', choices=FORMAT_CHOICES)
+    render_as_template = models.BooleanField(default=False)
+    excerpt = models.TextField(blank=True, default='')
+    key_image = models.ImageField(upload_to='uploads/blog/', blank=True, default='')
+    display_image = models.BooleanField(default=True, blank=True, help_text='Display image on post detail?')
+    tags = TaggableManager(blank=True)
+    categories = models.ManyToManyField('simple_cms.Category', blank=True, related_name='articles')
+    allow_comments = models.BooleanField(default=True)
+    author = models.ForeignKey(User, blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-post_date']
+    
+    def __unicode__(self):
+        return self.title
+    
+    def has_excerpt(self):
+        if self.excerpt != '':
+            return '<img src="/media/img/admin/icon-yes.gif" alt="True">'
+        return '<img src="/media/img/admin/icon-no.gif" alt="False">'
+    
+    has_excerpt.admin_order_field = 'excerpt'
+    has_excerpt.allow_tags = True
+    

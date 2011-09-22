@@ -1,5 +1,7 @@
-from simple_cms.models import Navigation
+from django.contrib.sites.models import Site
 from django.conf import settings
+
+from simple_cms.models import Navigation
 
 class NavigationHelper(object):
     
@@ -7,15 +9,19 @@ class NavigationHelper(object):
         self.request = request
         self.urlA = request.META['PATH_INFO'].strip('/').split('/')
         self.page = None
-        self.nav2 = []
+        self.nav2 = None
         self.nav3 = None
         self.parent = None
+        try:
+            self.site = Site.objects.get_current()
+        except:
+            self.site = Site.objects.get(pk=1)
     
     def is_homepage(self):
         try:
-            if urlA[0] == '':
+            if self.urlA[0] == '':
                 try:
-                    self.page = Navigation.objects.get(active=True, homepage=True)
+                    self.page = Navigation.objects.get(active=True, site=self.site, homepage=True)
                     return True
                 except Navigation.DoesNotExist:
                     return False
@@ -26,7 +32,7 @@ class NavigationHelper(object):
     def find_page(self):
         for slug in self.urlA:
             try:
-                self.page = Navigation.objects.get(active=True, parent=self.page, slug=slug)
+                self.page = Navigation.objects.get(active=True, parent=self.page, slug=slug, site=self.site)
             except Navigation.DoesNotExist:
                 break
     
