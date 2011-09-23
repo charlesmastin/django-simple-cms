@@ -106,6 +106,20 @@ class Navigation(TextMixin, CommonAbstractModel):
             return l
         return ''
 
+    def custom_template(self):
+        if self.template:
+            return '<img src="/media/img/admin/icon-yes.gif" alt="yes" title="%s">' % self.template
+        return ''
+    custom_template.allow_tags = True
+    custom_template.admin_order_field = 'template'
+    
+    def custom_view(self):
+        if self.view:
+            return '<img src="/media/img/admin/icon-yes.gif" alt="yes" title="%s">' % self.view
+        return ''
+    custom_view.allow_tags = True
+    custom_view.admin_order_field = 'view'
+
     def root(self):
         item = self
         while item.parent:

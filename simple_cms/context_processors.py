@@ -9,6 +9,7 @@ class NavigationHelper(object):
         self.request = request
         self.urlA = request.META['PATH_INFO'].strip('/').split('/')
         self.page = None
+        self.pageA = []
         self.nav2 = None
         self.nav3 = None
         self.parent = None
@@ -16,12 +17,14 @@ class NavigationHelper(object):
             self.site = Site.objects.get_current()
         except:
             self.site = Site.objects.get(pk=1)
+        self.insert_parent = True
     
     def is_homepage(self):
         try:
             if self.urlA[0] == '':
                 try:
                     self.page = Navigation.objects.get(active=True, site=self.site, homepage=True)
+                    self.pageA.append(self.page)
                     return True
                 except Navigation.DoesNotExist:
                     return False
@@ -33,6 +36,7 @@ class NavigationHelper(object):
         for slug in self.urlA:
             try:
                 self.page = Navigation.objects.get(active=True, parent=self.page, slug=slug, site=self.site)
+                self.pageA.append(self.page)
             except Navigation.DoesNotExist:
                 break
     
@@ -45,12 +49,14 @@ class NavigationHelper(object):
             if self.page.depth == 1:
                 self.nav2 = list(self.page.parent.children.all().filter(active=True).order_by('order'))
                 self.nav3 = list(self.page.children.all().filter(active=True).order_by('order'))
-                self.nav3.insert(0, self.page)
+                if self.insert_parent:
+                    self.nav3.insert(0, self.page)
                 self.parent = self.page.parent
             if self.page.depth == 2:
                 self.nav2 = list(self.page.parent.parent.children.all().filter(active=True).order_by('order'))
                 self.nav3 = list(self.page.parent.children.all().filter(active=True).order_by('order'))
-                self.nav3.insert(0, self.page.parent)
+                if self.insert_parent:
+                    self.nav3.insert(0, self.page.parent)
                 self.parent = self.page.parent.parent
     
     def extra_context(self):
@@ -60,6 +66,7 @@ class NavigationHelper(object):
         r = {
             'urlA': self.urlA,
             'page': self.page,
+            'pageA': self.pageA,
             'parent': self.parent,
             'nav2': self.nav2,
             'nav3': self.nav3,
