@@ -71,7 +71,7 @@ class Navigation(TextMixin, CommonAbstractModel):
     slug = AutoSlugField(editable=True, populate_from='title')
     group = models.ForeignKey(NavigationGroup, blank=True, null=True)
     parent = models.ForeignKey('self', blank=True, null=True, related_name='children')
-    order = PositionField(collection='parent')
+    order = PositionField(collection=('parent', 'site'))
     site = models.ForeignKey(Site, related_name='pages')
     homepage = models.BooleanField(default=False)
     url = models.CharField(max_length=255, blank=True, default='', help_text='eg. link somewhere else http://awesome.com/ or /awesome/page/')
