@@ -54,6 +54,16 @@ class ArticleTagView(ListView):
         return Article.objects.get_active().filter(tags__slug__in=[self.tag])
 
 
+class ArticleCategoryView(ListView):
+
+    def get(self, request, *args, **kwargs):
+        self.category = kwargs['slug']
+        return super(ArticleCategoryView, self).get(self, request, *args, **kwargs)
+
+    def get_queryset(self):
+        return Article.objects.get_active().filter(categories__slug__in=[self.category])
+
+
 class ArticleSearchView(ListView):
 
     def get(self, request, *args, **kwargs):
