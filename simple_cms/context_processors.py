@@ -64,6 +64,7 @@ class NavigationHelper(object):
     
     def context(self):
         r = {
+            'site': self.site,
             'urlA': self.urlA,
             'page': self.page,
             'pageA': self.pageA,

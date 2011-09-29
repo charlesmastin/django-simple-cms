@@ -3,6 +3,7 @@ from django.template import Node
 from django.contrib.sites.models import Site
 
 from simple_cms.models import Navigation, Block
+from simple_cms.forms import ArticleSearchForm
 
 register = template.Library()
 
@@ -222,3 +223,22 @@ def get_blocks(parser, token):
     
     raise TemplateSyntaxError, "get_blocks for nav [group] as varname"
     
+
+class ArticleSearchFormNode(template.Node):
+    def __init__(self, var_name):
+        self.var_name = var_name
+    
+    def render(self, context):
+        context[self.var_name] = ArticleSearchForm()
+        return ''
+
+
+@register.tag
+def get_article_search_form(parser, token):
+    try:
+        tag_name, arg = token.contents.split(None, 1)
+    except ValueError:
+        raise template.TemplateSyntaxError, "%r tag requires arguments" % \
+                token.contents.split()[0]
+    bits = arg.split()
+    return ArticleSearchFormNode(bits[1])
