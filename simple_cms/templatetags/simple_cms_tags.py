@@ -116,36 +116,32 @@ def split_list(parser, token):
 #split_list = register.tag(split_list)
 
 class PathNode(template.Node):
-    def __init__(self, path, variable):
+    def __init__(self, path, depth, variable):
         self.path = template.Variable(path)
+        self.depth = template.Variable(depth)
         self.variable = variable
     
     def render(self, context):
         found = False
-        """
-        general search, too weak
-        if re.search(self.path.resolve(context), context['request'].path):
-            found = True
-        match exact leading string
+        depth = self.depth.resolve(context)
+        path = self.path.resolve(context)
+        url = context['request'].path
         
-        /section/sub/sub/
-        /section/sub/
-        """
-        href = self.path.resolve(context)
-        path = context['request'].path
-        
-        if href == path:
+        if path == url:
             found = True
         
-        if len(path.split('/')) > 3:
-            
-            if len(href) > len(path):
-                if href[0:len(path)] == path:
-                    found = True
-            else:
-                if path[0:len(href)] == href:
-                    found = True
-            
+        paths = path.strip('/').split('/')
+        urls = url.strip('/').split('/')
+        
+        matches = 0
+        for i in xrange(0, depth):
+            try:
+                if paths[i] == urls[i]:
+                    matches += 1
+            except IndexError:
+                pass
+        if matches == depth:
+            found = True
         
         context[self.variable] = found
         return ''
@@ -158,7 +154,7 @@ def path_in_url(parser, token):
     except ValueError:
         raise template.TemplateSyntaxError, "%r tag requires arguments" % \
                 token.contents.split()[0]
-    return PathNode(args[1], args[3])
+    return PathNode(args[1], args[2], args[4])
 
 
 class NavigationBlocksNode(template.Node):
