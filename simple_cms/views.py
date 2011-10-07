@@ -2,32 +2,49 @@ from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 from django.contrib.sites.models import Site
 from django.conf import settings
-from django.views.generic import ListView, DateDetailView
+from django.views.generic import View, ListView, DateDetailView
 from django.db.models import Q
+from django.http import HttpResponseRedirect, HttpResponsePermanentRedirect, HttpResponseNotFound, Http404
 
 from simple_cms.models import Navigation, Article
 from simple_cms.forms import ArticleSearchForm
 
 
-def page(request, template=''):
-    if template == '':
-        template = settings.SIMPLE_CMS_PAGE_TEMPLATE
-    context = RequestContext(request)
-    for i in context['pageA']:
-        if i.template:
-            template = i.template
-    if context['page'].view:
-        # dynamic import, not a terrible risk
-        tA = context['page'].view.split('.')
-        c = tA.pop()
-        import_string = 'from %s import %s' % ('.'.join(tA), c)
-        exec import_string
-        return eval(c)(request=request)
-    return render_to_response(
-        template,
-        { },
-        context_instance=RequestContext(request)
-    )
+class NavigationView(View):
+
+    def post(self, request, *args, **kwargs):
+        return self._handler(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        return self._handler(request, *args, **kwargs)
+
+    def _handler(self, request, *args, **kwargs):
+        self.template = settings.SIMPLE_CMS_PAGE_TEMPLATE
+        context = RequestContext(request)
+        if context['page'] and context['exact_match']:
+            if context['page'].redirect_url:
+                if context['page'].redirect_permanent:
+                    return HttpResponsePermanentRedirect(context['page'].redirect_url)
+                else:
+                    return HttpResonseRedirect(context['page'].redirect_url)
+            if context['page'].view:
+                if context['page'].view.find('.as_view(') != -1:
+                    pass
+                else:
+                    tA = context['page'].view.split('.')
+                    c = tA.pop()
+                    import_string = 'from %s import %s' % ('.'.join(tA), c)
+                    exec import_string
+                    return eval(c)(request=request)
+            for i in context['pageA']:
+                if i.template:
+                    self.template = i.template
+            return render_to_response(
+                self.template,
+                { },
+                context_instance=context,
+            )
+        raise Http404
 
 
 class ArticleListView(ListView):

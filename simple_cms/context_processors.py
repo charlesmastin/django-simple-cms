@@ -13,11 +13,11 @@ class NavigationHelper(object):
         self.nav2 = None
         self.nav3 = None
         self.parent = None
+        self.exact_match = False
         try:
             self.site = Site.objects.get_current()
         except:
             self.site = Site.objects.get(pk=1)
-        self.insert_parent = True
     
     def is_homepage(self):
         try:
@@ -39,6 +39,10 @@ class NavigationHelper(object):
                 self.pageA.append(self.page)
             except Navigation.DoesNotExist:
                 break
+        # check for exact match, need to ignore the trailing anchors and so on, so reassemble the
+        if self.page:
+            if self.page.get_absolute_url() == '/%s/' % '/'.join(self.urlA):
+                self.exact_match = True
     
     def define_nav(self):
         if self.page:
@@ -49,14 +53,10 @@ class NavigationHelper(object):
             if self.page.depth == 1:
                 self.nav2 = list(self.page.parent.children.all().filter(active=True).order_by('order'))
                 self.nav3 = list(self.page.children.all().filter(active=True).order_by('order'))
-                if self.insert_parent:
-                    self.nav3.insert(0, self.page)
                 self.parent = self.page.parent
             if self.page.depth == 2:
                 self.nav2 = list(self.page.parent.parent.children.all().filter(active=True).order_by('order'))
                 self.nav3 = list(self.page.parent.children.all().filter(active=True).order_by('order'))
-                if self.insert_parent:
-                    self.nav3.insert(0, self.page.parent)
                 self.parent = self.page.parent.parent
     
     def extra_context(self):
@@ -71,6 +71,7 @@ class NavigationHelper(object):
             'parent': self.parent,
             'nav2': self.nav2,
             'nav3': self.nav3,
+            'exact_match': self.exact_match,
         }
         if self.extra_context():
             r.update(self.extra_context())

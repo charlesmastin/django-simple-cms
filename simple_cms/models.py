@@ -82,6 +82,8 @@ class Navigation(TextMixin, CommonAbstractModel):
     render_as_template = models.BooleanField(default=False)
     template = models.CharField(max_length=255, blank=True, default='', help_text='Eg. common/awesome.html')
     view = models.CharField(max_length=255, blank=True, default='', help_text='Eg. common.views.awesome')
+    redirect_url = models.CharField(max_length=255, blank=True, default='')
+    redirect_permanent = models.BooleanField(default=False)
     seo_title = models.CharField(max_length=255, blank=True, default='', help_text='Complete html title replacement')
     seo_description = models.TextField(blank=True, default='')
     seo_keywords = models.TextField(blank=True, default='')
