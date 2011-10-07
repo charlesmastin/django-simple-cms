@@ -46,6 +46,7 @@ class NavigationAdmin(admin.ModelAdmin):
                 'render_as_template',
                 ('url', 'target'),
                 ('view', 'template'),
+                ('redirect_url', 'redirect_permanent'),
             ),
         }),
     )
