@@ -17,8 +17,8 @@ class NavigationForm(forms.ModelForm):
 
 class NavigationAdmin(admin.ModelAdmin):
     form = NavigationForm
-    list_display = ['title', 'parent', 'order', 'slug', 'group', 'blocks', 'view', 'active']
-    list_filter = ['group', 'site', 'active']
+    list_display = ['title', 'slug', 'order', 'parent', 'blocks', 'view', 'active']
+    list_filter = ['group', 'site__name', 'active']
     save_on_top = True
     prepopulated_fields = {'slug': ('title',)}
     inlines = [BlockInline]
@@ -46,6 +46,7 @@ class NavigationAdmin(admin.ModelAdmin):
                 'render_as_template',
                 ('url', 'target'),
                 ('view', 'template'),
+                ('redirect_url', 'redirect_permanent'),
             ),
         }),
     )

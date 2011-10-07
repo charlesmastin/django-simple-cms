@@ -71,7 +71,7 @@ class Navigation(TextMixin, CommonAbstractModel):
     slug = AutoSlugField(editable=True, populate_from='title')
     group = models.ForeignKey(NavigationGroup, blank=True, null=True)
     parent = models.ForeignKey('self', blank=True, null=True, related_name='children')
-    order = PositionField(collection='parent')
+    order = PositionField(collection=('parent', 'site'))
     site = models.ForeignKey(Site, related_name='pages')
     homepage = models.BooleanField(default=False)
     url = models.CharField(max_length=255, blank=True, default='', help_text='eg. link somewhere else http://awesome.com/ or /awesome/page/')
@@ -82,6 +82,8 @@ class Navigation(TextMixin, CommonAbstractModel):
     render_as_template = models.BooleanField(default=False)
     template = models.CharField(max_length=255, blank=True, default='', help_text='Eg. common/awesome.html')
     view = models.CharField(max_length=255, blank=True, default='', help_text='Eg. common.views.awesome')
+    redirect_url = models.CharField(max_length=255, blank=True, default='')
+    redirect_permanent = models.BooleanField(default=False)
     seo_title = models.CharField(max_length=255, blank=True, default='', help_text='Complete html title replacement')
     seo_description = models.TextField(blank=True, default='')
     seo_keywords = models.TextField(blank=True, default='')
@@ -105,6 +107,20 @@ class Navigation(TextMixin, CommonAbstractModel):
         if l:
             return l
         return ''
+
+    def custom_template(self):
+        if self.template:
+            return '<img src="/media/img/admin/icon-yes.gif" alt="yes" title="%s">' % self.template
+        return ''
+    custom_template.allow_tags = True
+    custom_template.admin_order_field = 'template'
+    
+    def custom_view(self):
+        if self.view:
+            return '<img src="/media/img/admin/icon-yes.gif" alt="yes" title="%s">' % self.view
+        return ''
+    custom_view.allow_tags = True
+    custom_view.admin_order_field = 'view'
 
     def root(self):
         item = self
