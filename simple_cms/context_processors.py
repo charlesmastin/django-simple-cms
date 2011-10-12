@@ -73,6 +73,9 @@ class NavigationHelper(object):
             'nav3': self.nav3,
             'exact_match': self.exact_match,
         }
+        if self.page:
+            if len(self.page.seo.all()) == 1:
+                r.update({'seo': self.page.seo.all()[0]})
         if self.extra_context():
             r.update(self.extra_context())
         return r

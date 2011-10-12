@@ -273,6 +273,7 @@ class Article(TextMixin, CommonAbstractModel):
     url = models.CharField(max_length=255, blank=True, default='', help_text='eg. link somewhere else http://awesome.com/ or /awesome/page/')
     target = models.CharField(max_length=255, blank=True, default='', help_text='eg. open link in "_blank" window', choices=TARGET_CHOICES)
     display_title = models.BooleanField(default=True, help_text='Display title on list view?')
+    seo = generic.GenericRelation(Seo)
     
     class Meta:
         ordering = ['-post_date']
