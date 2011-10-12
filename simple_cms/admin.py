@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 
-from models import *
+from simple_cms.models import *
 
 class BlockInline(admin.TabularInline):
     model = NavigationBlocks
@@ -15,13 +15,19 @@ class NavigationForm(forms.ModelForm):
     class Meta:
         model = Navigation
 
+class SeoInline(generic.GenericStackedInline):
+    model = Seo
+    extra = 0
+    max_num = 1
+
+
 class NavigationAdmin(admin.ModelAdmin):
     form = NavigationForm
     list_display = ['title', 'slug', 'order', 'parent', 'blocks', 'view', 'active']
     list_filter = ['group', 'site__name', 'active']
     save_on_top = True
     prepopulated_fields = {'slug': ('title',)}
-    inlines = [BlockInline]
+    inlines = [BlockInline, SeoInline]
     search_fields = ['title', 'text']
     fieldsets = (
         (None, {
@@ -34,12 +40,9 @@ class NavigationAdmin(admin.ModelAdmin):
                 'format',
             ),
         }),
-        ('SEO / Advanced Options', {
+        ('Advanced Options', {
             'classes': ('collapse',),
             'fields': (
-                'seo_title',
-                'seo_description',
-                'seo_keywords',
                 'page_title',
                 'homepage',
                 'inherit_blocks',
@@ -65,7 +68,7 @@ class BlockAdmin(admin.ModelAdmin):
                 'format',
             ),
         }),
-        ('Advanced', {
+        ('Advanced Options', {
             'classes': ('collapse',),
             'fields': (
                 'render_as_template',
@@ -79,6 +82,7 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ['title', 'parent', 'order', 'active']
     list_filter = ['active']
     prepopulated_fields = {'slug': ('title',)}
+    
 
 
 class CategoryInline(admin.TabularInline):
@@ -92,7 +96,30 @@ class ArticleAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('title',)}
     save_on_top = True
     exclude = ['categories']
-    inlines = [CategoryInline]
+    inlines = [CategoryInline, SeoInline]
+    fieldsets = (
+        (None, {
+            'fields': (
+                ('active', 'post_date'),
+                ('title', 'slug'),
+                'key_image',
+                'excerpt',
+                'text',
+                'format',
+                'tags',
+                ('author', 'allow_comments'),
+            ),
+        }),
+        ('Advanced Options', {
+            'classes': ('collapse',),
+            'fields': (
+                'render_as_template',
+                ('url', 'target'),
+                'display_title',
+                'display_image',
+            ),
+        }),
+    )
 
 admin.site.register(Block, BlockAdmin)
 admin.site.register(BlockGroup)

@@ -20,6 +20,13 @@ FORMAT_CHOICES = (
     ('restructuredtext', 'restructuredtext')
 )
 
+TARGET_CHOICES = (
+    ('_blank', '_blank'),
+    ('_self', '_self'),
+    ('_top', '_top'),
+    ('_parent', '_parent')
+)
+
 class CommonAbstractManager(models.Manager):
 
     def get_active(self):
@@ -53,6 +60,21 @@ class CommonAbstractModel(models.Model):
         return self.__class__.__name__
 
 
+class Seo(models.Model):
+    title = models.CharField(max_length=255, blank=True, default='', help_text='Complete html title replacement')
+    description = models.TextField(blank=True, default='')
+    keywords = models.TextField(blank=True, default='')
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = generic.GenericForeignKey('content_type', 'object_id')
+    
+    class Meta:
+        unique_together = ['content_type', 'object_id']
+        verbose_name_plural = 'Seo'
+    
+    def __unicode__(self):
+        return '%s' % self.id
+
 class NavigationGroup(models.Model):
     title = models.CharField(max_length=255)
     
@@ -67,7 +89,7 @@ class Navigation(TextMixin, CommonAbstractModel):
     Navigation and Page combined model
     Customizations on One-To-One in implementing app
     """
-    title = models.CharField(max_length=255)
+    title = models.CharField(max_length=255, help_text='Navigation and default page title')
     slug = AutoSlugField(editable=True, populate_from='title')
     group = models.ForeignKey(NavigationGroup, blank=True, null=True)
     parent = models.ForeignKey('self', blank=True, null=True, related_name='children')
@@ -75,7 +97,7 @@ class Navigation(TextMixin, CommonAbstractModel):
     site = models.ForeignKey(Site, related_name='pages')
     homepage = models.BooleanField(default=False)
     url = models.CharField(max_length=255, blank=True, default='', help_text='eg. link somewhere else http://awesome.com/ or /awesome/page/')
-    target = models.CharField(max_length=255, blank=True, default='', help_text='eg. open link in "_blank" window')
+    target = models.CharField(max_length=255, blank=True, default='', help_text='eg. open link in "_blank" window', choices=TARGET_CHOICES)
     page_title = models.CharField(max_length=255, blank=True, default='', help_text='Optional html title')
     text = models.TextField(blank=True, default='')
     format = models.CharField(max_length=255, blank=True, default='', choices=FORMAT_CHOICES)
@@ -84,10 +106,8 @@ class Navigation(TextMixin, CommonAbstractModel):
     view = models.CharField(max_length=255, blank=True, default='', help_text='Eg. common.views.awesome')
     redirect_url = models.CharField(max_length=255, blank=True, default='')
     redirect_permanent = models.BooleanField(default=False)
-    seo_title = models.CharField(max_length=255, blank=True, default='', help_text='Complete html title replacement')
-    seo_description = models.TextField(blank=True, default='')
-    seo_keywords = models.TextField(blank=True, default='')
     inherit_blocks = models.BooleanField(default=True, verbose_name="Inherit Blocks")
+    seo = generic.GenericRelation(Seo)
 
     class Meta:
         unique_together = (('site', 'slug', 'parent'),)
@@ -250,6 +270,9 @@ class Article(TextMixin, CommonAbstractModel):
     categories = models.ManyToManyField('simple_cms.Category', blank=True, related_name='articles')
     allow_comments = models.BooleanField(default=True)
     author = models.ForeignKey(User, blank=True, null=True)
+    url = models.CharField(max_length=255, blank=True, default='', help_text='eg. link somewhere else http://awesome.com/ or /awesome/page/')
+    target = models.CharField(max_length=255, blank=True, default='', help_text='eg. open link in "_blank" window', choices=TARGET_CHOICES)
+    display_title = models.BooleanField(default=True, help_text='Display title on list view?')
     
     class Meta:
         ordering = ['-post_date']
