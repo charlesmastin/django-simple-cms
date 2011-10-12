@@ -289,3 +289,8 @@ class Article(TextMixin, CommonAbstractModel):
     has_excerpt.admin_order_field = 'excerpt'
     has_excerpt.allow_tags = True
     
+    def get_target(self):
+        if self.target:
+            return 'target="%s"' % self.target
+        return ''
+
