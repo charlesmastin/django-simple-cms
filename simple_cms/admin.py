@@ -55,8 +55,8 @@ class NavigationAdmin(admin.ModelAdmin):
     )
 
 class BlockAdmin(admin.ModelAdmin):
-    list_display = ('key', 'title', 'image', 'format')
-    list_filter = ('format', )
+    list_display = ('key', 'title', 'url', 'image', 'format')
+    #list_filter = ('format', )
     fieldsets = (
         (None, {
             'fields': (
@@ -64,6 +64,7 @@ class BlockAdmin(admin.ModelAdmin):
                 'key',
                 'title',
                 'image',
+                ('url', 'target'),
                 'text',
                 'format',
             ),

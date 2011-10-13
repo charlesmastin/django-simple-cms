@@ -41,6 +41,19 @@ class TextMixin(object):
             'render_as_template': self.render_as_template,
         }
 
+
+class UrlMixin(object):
+    @property
+    def link_attributes(self):
+        r = ''
+        if self.target:
+            r = r+'target="%s"' % self.target
+        if self.url:
+            r = r+'href="%s"' % self.url
+            return mark_safe(r)
+        return mark_safe(r)
+
+
 class CommonAbstractModel(models.Model):
     """
     Common ABC for most models.
@@ -185,6 +198,10 @@ class Navigation(TextMixin, CommonAbstractModel):
         return mark_safe(r)
 
     @property
+    def link_attributes(self):
+        return self.href
+
+    @property
     def depth(self):
         depth = 0
         item = self
@@ -210,13 +227,15 @@ class BlockGroup(models.Model):
         return self.title
 
 
-class Block(TextMixin, CommonAbstractModel):
+class Block(TextMixin, UrlMixin, CommonAbstractModel):
     key = models.CharField(max_length=255, help_text='Internal name to refer to this item')
     title = models.CharField(max_length=255, blank=True, help_text='Optional header on sidebar')
     text = models.TextField(blank=True, default='')
     format = models.CharField(max_length=255, blank=True, default='', choices=FORMAT_CHOICES)
     render_as_template = models.BooleanField(default=False)
     image = models.ImageField(upload_to='uploads/contentblocks/', blank=True, default='', help_text='Optional image')
+    url = models.CharField(max_length=255, blank=True, default='', help_text='eg. link image / title somewhere http://awesome.com/ or /awesome/page/')
+    target = models.CharField(max_length=255, blank=True, default='', help_text='eg. open image / title link in "_blank" window', choices=TARGET_CHOICES)
     content_type = models.ForeignKey(ContentType, blank=True, null=True, help_text="""Choose an existing item type.<br>The most common choices will be Expert, etc.""")
     object_id = models.PositiveIntegerField(blank=True, null=True, help_text="""Type in the ID of the item you want to choose. You should see the title appear beside the box.""")
     content_object = generic.GenericForeignKey('content_type', 'object_id')
@@ -256,7 +275,7 @@ class Category(CommonAbstractModel):
         return self.title
 
 
-class Article(TextMixin, CommonAbstractModel):
+class Article(TextMixin, UrlMixin, CommonAbstractModel):
     title = models.CharField(max_length=255)
     slug = AutoSlugField(editable=True, populate_from='title')
     post_date = models.DateTimeField(editable=True)
