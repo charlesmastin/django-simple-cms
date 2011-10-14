@@ -30,6 +30,37 @@ def sorl_format(parser, token):
         raise template.TemplateSyntaxError, 'syntax error'
     return SorlNode(args[0], args[2])
 
+
+class ExternalNode(template.Node):
+    def __init__(self, url, var_name):
+        self.url = template.Variable(url)
+        self.var_name = var_name
+    
+    def render(self, context):
+        from simple_cms.utils import is_external_url
+        protocol = 'http://'
+        if context['request'].is_secure():
+            protocol = 'https://'
+        context[self.var_name] = is_external_url(
+                                    self.url.resolve(context),
+                                    '%s%s%s' % (
+                                        protocol,
+                                        context['request'].get_host(),
+                                        context['request'].path
+                                    )
+                                )
+        return ''
+
+@register.tag
+def is_external_url(parser, token):
+    try:
+        tag_name, arg = token.contents.split(None, 1)
+        args = arg.split()
+    except ValueError:
+        raise template.TemplateSyntaxError, 'syntax error'
+    return ExternalNode(args[0], args[2])
+
+
 class NavNode(template.Node):
     def __init__(self, group, var_name):
         self.group = template.Variable(group)
