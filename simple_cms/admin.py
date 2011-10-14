@@ -91,7 +91,7 @@ class CategoryInline(admin.TabularInline):
     extra = 0
 
 class ArticleAdmin(admin.ModelAdmin):
-    list_display = ['title', 'post_date', 'has_excerpt', 'active']
+    list_display = ['title', 'post_date', 'has_excerpt', 'key_image', 'active']
     list_filter = ['active', 'post_date']
     date_hierarchy = 'post_date'
     prepopulated_fields = {'slug': ('title',)}

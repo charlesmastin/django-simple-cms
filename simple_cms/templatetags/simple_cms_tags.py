@@ -7,6 +7,28 @@ from simple_cms.forms import ArticleSearchForm
 
 register = template.Library()
 
+class SorlNode(template.Node):
+    def __init__(self, image, var_name):
+        self.image = template.Variable(image)
+        self.var_name = var_name
+    
+    def render(self, context):
+        ext = str(self.image.resolve(context)).split('.')[-1].lower()
+        if ext == 'png':
+            format = 'PNG'
+        if ext in ('jpeg', 'jpg'):
+            format = 'JPEG'
+        context[self.var_name] = format
+        return ''
+
+@register.tag
+def sorl_format(parser, token):
+    try:
+        tag_name, arg = token.contents.split(None, 1)
+        args = arg.split()
+    except ValueError:
+        raise template.TemplateSyntaxError, 'syntax error'
+    return SorlNode(args[0], args[2])
 
 class NavNode(template.Node):
     def __init__(self, group, var_name):
