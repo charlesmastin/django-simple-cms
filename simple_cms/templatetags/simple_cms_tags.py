@@ -16,7 +16,7 @@ class SorlNode(template.Node):
         ext = str(self.image.resolve(context)).split('.')[-1].lower()
         if ext == 'png':
             format = 'PNG'
-        if ext in ('jpeg', 'jpg'):
+        if ext in ('jpeg', 'jpg', 'gif'):
             format = 'JPEG'
         context[self.var_name] = format
         return ''
