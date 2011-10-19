@@ -27,7 +27,7 @@ class NavigationView(View):
                 if context['page'].redirect_permanent:
                     return HttpResponsePermanentRedirect(context['page'].redirect_url)
                 else:
-                    return HttpResonseRedirect(context['page'].redirect_url)
+                    return HttpResponseRedirect(context['page'].redirect_url)
             if context['page'].view:
                 if context['page'].view.find('.as_view(') != -1:
                     pass

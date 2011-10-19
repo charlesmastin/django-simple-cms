@@ -25,6 +25,7 @@ class NavigationHelper(object):
                 try:
                     self.page = Navigation.objects.get(active=True, site=self.site, homepage=True)
                     self.pageA.append(self.page)
+                    self.exact_match = True
                     return True
                 except Navigation.DoesNotExist:
                     return False
