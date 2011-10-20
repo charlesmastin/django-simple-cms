@@ -31,6 +31,19 @@ def sorl_format(parser, token):
     return SorlNode(args[0], args[2])
 
 
+@register.simple_tag(takes_context=True)
+def page_url(context, id):
+    try:
+        nav = Navigation.objects.get(pk=id)
+        if nav.url:
+            return nav.url
+        protocol = 'http://'
+        if context['request'].is_secure():
+            protocol = 'https://'
+        return '%s%s%s' % (protocol, nav.site.domain, nav.get_absolute_url())
+    except Navigation.DoesNotExist:
+        return ''
+
 class ExternalNode(template.Node):
     def __init__(self, url, var_name):
         self.url = template.Variable(url)
