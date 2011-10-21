@@ -8,9 +8,8 @@ from django.contrib.sites.models import Site
 from django_extensions.db.fields import CreationDateTimeField
 from django_extensions.db.fields import ModificationDateTimeField
 from django_extensions.db.fields import AutoSlugField
-
+from django_countries import CountryField
 from taggit.managers import TaggableManager
-
 from positions.fields import PositionField
 
 FORMAT_CHOICES = (
@@ -313,3 +312,96 @@ class Article(TextMixin, UrlMixin, CommonAbstractModel):
             return 'target="%s"' % self.target
         return ''
 
+"""
+class Venue(CommonAbstractModel):
+    name = models.CharField(max_length=255)
+    slug = AutoSlugField(editable=True, populate_from='name')
+    url = models.CharField(max_length=255, blank=True, default='')
+    description = models.TextField(blank=True, default='')
+    city = models.CharField(max_length=255, blank=True, default='')
+    state = models.CharField(max_length=255, blank=True, default='')
+    country = CountryField(default='US')
+    address = models.CharField(max_length=255, blank=True, default='')
+    address_extended = models.CharField(max_length=255, blank=True, default='')
+    postal_code = models.CharField(max_length=255, blank=True, default='')
+    gmt_offset = models.CharField(max_length=255, blank=True, default='', help_text='Eg. -07:00')
+    
+    class Meta:
+        ordering = ['name']
+    
+    def __unicode__(self):
+        return '%s' % self.name
+    
+    @property
+    def map_address(self):
+        tA = []
+        if self.location_city:
+            tA.append(self.location_city)
+        if self.location_state:
+            tA.append(self.location_state)
+        tA.append(self.location_country.code)
+        return ', '.join(tA)
+
+
+class EventManager(models.Manager):
+
+    def get_active(self):
+        return self.get_query_set().filter(active=True)
+
+    def upcoming(self):
+        return self.get_active().filter(start_datetime__gte=datetime.date.today())
+
+    def past(self):
+        return self.get_active().filter(start_datetime__lte=datetime.date.today()).order_by('-start_datetime')
+
+
+class Event(TextMixin, CommonAbstractModel):
+    title = models.CharField(max_length=255, blank=True, default='')
+    slug = AutoSlugField(editable=True, populate_from=('title'), allow_duplicates=True)
+    start_datetime = models.DateTimeField(verbose_name="Event Starts on",
+        help_text="Date format, YYY-MM-DD. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time format, HH:MM:SS (24-hour clock)<br>Enter time as local to the event.",
+        blank=True, null=True)
+    end_datetime = models.DateTimeField(verbose_name="Event Ends on",
+        help_text="Date format, YYY-MM-DD. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time format, HH:MM:SS (24-hour clock)<br>Enter time as local to the event.",
+        blank=True, null=True)
+    display_time = models.BooleanField(default=True)
+    venue = models.ForeignKey(Venue)
+    text = models.TextField(blank=True, default='')
+    format = models.CharField(max_length=255, blank=True, default='', choices=FORMAT_CHOICES)
+    render_as_template = models.BooleanField(default=False)
+    excerpt = models.TextField(blank=True, default='')
+    key_image = models.ImageField(upload_to='uploads/events/', blank=True, default='')
+    tickets_url = models.CharField(max_length=255, blank=True, default='')
+    tags = TaggableManager(blank=True)
+    objects = EventManager()
+    
+    class Meta:
+        ordering = ['start_datetime', 'end_datetime']
+    
+    def __unicode__(self):
+        return '%s' % (self.pk)
+    
+    @property
+    def is_past(self):
+        now = datetime.datetime.now()
+        
+        if self.end_datetime:
+            if (self.end_datetime > now):
+                return False
+            else:
+                return True
+        elif self.start_datetime:
+            if (self.start_datetime < now):
+                return True
+            else: 
+                return False
+        else: 
+            return True
+    
+    @property
+    def spanning(self):
+        if self.end_datetime:
+            if self.end_datetime.date() != self.start_datetime.date():
+                return True
+        return False
+"""
