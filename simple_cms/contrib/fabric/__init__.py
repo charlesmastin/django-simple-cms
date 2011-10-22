@@ -43,13 +43,11 @@ class Deployment(object):
         self.install_virtualenv()
         self.update_remote_db()
         self.finalize_remote()
-        sudo('/etc/init.d/apache2 restart')
+        self.restart_webserver()
         self.cleanup_remote()
         self.cleanup_local()
     
     def manual_deploy(self):
-        puts("Might want to run tests locally")
-        open_shell()
         self.prepare_local()
         self.prepare_remote()
         self.backup_remote_db()
@@ -120,6 +118,9 @@ class Deployment(object):
             
     def reload_remote(self):
         run('touch %s/python.wsgi' % self.env['rpath'])
+    
+    def restart_webserver(self):
+        sudo('/etc/init.d/apache2 restart')
     
     def cleanup_remote(self):
         pass
