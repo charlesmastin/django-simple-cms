@@ -1,10 +1,11 @@
-from django.shortcuts import get_object_or_404, render_to_response
+from django.shortcuts import get_object_or_404, render_to_response, render
 from django.template import RequestContext
 from django.contrib.sites.models import Site
 from django.conf import settings
 from django.views.generic import View, ListView, DateDetailView
 from django.db.models import Q
 from django.http import HttpResponseRedirect, HttpResponsePermanentRedirect, HttpResponseNotFound, Http404
+from django.core.urlresolvers import get_callable
 
 from simple_cms.models import Navigation, Article
 from simple_cms.forms import ArticleSearchForm
@@ -20,30 +21,23 @@ class NavigationView(View):
 
     def _handler(self, request, *args, **kwargs):
         self.template = settings.SIMPLE_CMS_PAGE_TEMPLATE
-        context = RequestContext(request)
+        context = RequestContext(request, {})
         if context['page'] and context['exact_match']:
             if context['page'].redirect_url:
                 if context['page'].redirect_permanent:
                     return HttpResponsePermanentRedirect(context['page'].redirect_url)
                 else:
-                    return HttpResonseRedirect(context['page'].redirect_url)
+                    return HttpResponseRedirect(context['page'].redirect_url)
             if context['page'].view:
                 if context['page'].view.find('.as_view(') != -1:
                     pass
                 else:
-                    tA = context['page'].view.split('.')
-                    c = tA.pop()
-                    import_string = 'from %s import %s' % ('.'.join(tA), c)
-                    exec import_string
-                    return eval(c)(request=request)
+                    cls = get_callable(context['page'].view)
+                    return cls(request)
             for i in context['pageA']:
                 if i.template:
                     self.template = i.template
-            return render_to_response(
-                self.template,
-                { },
-                context_instance=context,
-            )
+            return render(request, self.template, {}, context_instance=context)
         raise Http404
 
 
@@ -52,13 +46,17 @@ class ArticleListView(ListView):
     def get_context_data(self, *kwargs):
         context = super(ArticleListView, self).get_context_data(**kwargs)
         context['article_search_form'] = ArticleSearchForm()
+        return context
 
 
 class ArticleDetailView(DateDetailView):
 
-    def get_context_data(self, *kwargs):
-        context = super(ArticleListView, self).get_context_data(**kwargs)
-        context['article_search_form'] = ArticleSearchForm()
+    def get_context_data(self, **kwargs):
+        context = super(ArticleDetailView, self).get_context_data(**kwargs)
+        #context['article_search_form'] = ArticleSearchForm()
+        if len(self.object.seo.all()) == 1:
+            context.update({'seo': self.object.seo.all()[0]})
+        return context
 
 
 class ArticleTagView(ListView):

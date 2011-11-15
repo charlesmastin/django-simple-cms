@@ -13,6 +13,8 @@ class NavigationHelper(object):
         self.nav2 = None
         self.nav3 = None
         self.parent = None
+        self.nav2_parent = None
+        self.nav3_parent = None
         self.exact_match = False
         try:
             self.site = Site.objects.get_current()
@@ -25,6 +27,7 @@ class NavigationHelper(object):
                 try:
                     self.page = Navigation.objects.get(active=True, site=self.site, homepage=True)
                     self.pageA.append(self.page)
+                    self.exact_match = True
                     return True
                 except Navigation.DoesNotExist:
                     return False
@@ -48,16 +51,21 @@ class NavigationHelper(object):
         if self.page:
             # TODO: max template depth allowed, so hard code?
             if self.page.depth == 0:
-                self.nav2 = list(self.page.children.all().filter(active=True).order_by('order'))
                 self.parent = self.page
+                self.nav2 = list(self.page.children.all().filter(active=True).order_by('order'))
+                self.nav2_parent = self.page
             if self.page.depth == 1:
-                self.nav2 = list(self.page.parent.children.all().filter(active=True).order_by('order'))
-                self.nav3 = list(self.page.children.all().filter(active=True).order_by('order'))
                 self.parent = self.page.parent
+                self.nav2 = list(self.page.parent.children.all().filter(active=True).order_by('order'))
+                self.nav2_parent = self.page.parent
+                self.nav3 = list(self.page.children.all().filter(active=True).order_by('order'))
+                self.nav3_parent = self.page
             if self.page.depth == 2:
-                self.nav2 = list(self.page.parent.parent.children.all().filter(active=True).order_by('order'))
-                self.nav3 = list(self.page.parent.children.all().filter(active=True).order_by('order'))
                 self.parent = self.page.parent.parent
+                self.nav2 = list(self.page.parent.parent.children.all().filter(active=True).order_by('order'))
+                self.nav2_parent = self.page.parent.parent
+                self.nav3 = list(self.page.parent.children.all().filter(active=True).order_by('order'))
+                self.nav3_parent = self.page.parent
     
     def extra_context(self):
         return None
@@ -70,9 +78,14 @@ class NavigationHelper(object):
             'pageA': self.pageA,
             'parent': self.parent,
             'nav2': self.nav2,
+            'nav2_parent': self.nav2_parent,
             'nav3': self.nav3,
+            'nav3_parent': self.nav3_parent,
             'exact_match': self.exact_match,
         }
+        if self.page:
+            if len(self.page.seo.all()) == 1:
+                r.update({'seo': self.page.seo.all()[0]})
         if self.extra_context():
             r.update(self.extra_context())
         return r

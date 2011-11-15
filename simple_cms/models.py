@@ -8,9 +8,8 @@ from django.contrib.sites.models import Site
 from django_extensions.db.fields import CreationDateTimeField
 from django_extensions.db.fields import ModificationDateTimeField
 from django_extensions.db.fields import AutoSlugField
-
+from django_countries import CountryField
 from taggit.managers import TaggableManager
-
 from positions.fields import PositionField
 
 FORMAT_CHOICES = (
@@ -18,6 +17,13 @@ FORMAT_CHOICES = (
     ('markdown', 'markdown'),
     ('textile', 'textile'),
     ('restructuredtext', 'restructuredtext')
+)
+
+TARGET_CHOICES = (
+    ('_blank', '_blank'),
+    ('_self', '_self'),
+    ('_top', '_top'),
+    ('_parent', '_parent')
 )
 
 class CommonAbstractManager(models.Manager):
@@ -33,6 +39,19 @@ class TextMixin(object):
             'format': self.format,
             'render_as_template': self.render_as_template,
         }
+
+
+class UrlMixin(object):
+    @property
+    def link_attributes(self):
+        r = ''
+        if self.target:
+            r = r+'target="%s"' % self.target
+        if self.url:
+            r = r+'href="%s"' % self.url
+            return mark_safe(r)
+        return mark_safe(r)
+
 
 class CommonAbstractModel(models.Model):
     """
@@ -53,6 +72,21 @@ class CommonAbstractModel(models.Model):
         return self.__class__.__name__
 
 
+class Seo(models.Model):
+    title = models.CharField(max_length=255, blank=True, default='', help_text='Complete html title replacement')
+    description = models.TextField(blank=True, default='')
+    keywords = models.TextField(blank=True, default='')
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = generic.GenericForeignKey('content_type', 'object_id')
+    
+    class Meta:
+        unique_together = ['content_type', 'object_id']
+        verbose_name_plural = 'Seo'
+    
+    def __unicode__(self):
+        return '%s' % self.id
+
 class NavigationGroup(models.Model):
     title = models.CharField(max_length=255)
     
@@ -67,7 +101,7 @@ class Navigation(TextMixin, CommonAbstractModel):
     Navigation and Page combined model
     Customizations on One-To-One in implementing app
     """
-    title = models.CharField(max_length=255)
+    title = models.CharField(max_length=255, help_text='Navigation and default page title')
     slug = AutoSlugField(editable=True, populate_from='title')
     group = models.ForeignKey(NavigationGroup, blank=True, null=True)
     parent = models.ForeignKey('self', blank=True, null=True, related_name='children')
@@ -75,7 +109,7 @@ class Navigation(TextMixin, CommonAbstractModel):
     site = models.ForeignKey(Site, related_name='pages')
     homepage = models.BooleanField(default=False)
     url = models.CharField(max_length=255, blank=True, default='', help_text='eg. link somewhere else http://awesome.com/ or /awesome/page/')
-    target = models.CharField(max_length=255, blank=True, default='', help_text='eg. open link in "_blank" window')
+    target = models.CharField(max_length=255, blank=True, default='', help_text='eg. open link in "_blank" window', choices=TARGET_CHOICES)
     page_title = models.CharField(max_length=255, blank=True, default='', help_text='Optional html title')
     text = models.TextField(blank=True, default='')
     format = models.CharField(max_length=255, blank=True, default='', choices=FORMAT_CHOICES)
@@ -84,10 +118,8 @@ class Navigation(TextMixin, CommonAbstractModel):
     view = models.CharField(max_length=255, blank=True, default='', help_text='Eg. common.views.awesome')
     redirect_url = models.CharField(max_length=255, blank=True, default='')
     redirect_permanent = models.BooleanField(default=False)
-    seo_title = models.CharField(max_length=255, blank=True, default='', help_text='Complete html title replacement')
-    seo_description = models.TextField(blank=True, default='')
-    seo_keywords = models.TextField(blank=True, default='')
     inherit_blocks = models.BooleanField(default=True, verbose_name="Inherit Blocks")
+    seo = generic.GenericRelation(Seo)
 
     class Meta:
         unique_together = (('site', 'slug', 'parent'),)
@@ -165,6 +197,10 @@ class Navigation(TextMixin, CommonAbstractModel):
         return mark_safe(r)
 
     @property
+    def link_attributes(self):
+        return self.href
+
+    @property
     def depth(self):
         depth = 0
         item = self
@@ -190,13 +226,15 @@ class BlockGroup(models.Model):
         return self.title
 
 
-class Block(TextMixin, CommonAbstractModel):
+class Block(TextMixin, UrlMixin, CommonAbstractModel):
     key = models.CharField(max_length=255, help_text='Internal name to refer to this item')
     title = models.CharField(max_length=255, blank=True, help_text='Optional header on sidebar')
     text = models.TextField(blank=True, default='')
     format = models.CharField(max_length=255, blank=True, default='', choices=FORMAT_CHOICES)
     render_as_template = models.BooleanField(default=False)
     image = models.ImageField(upload_to='uploads/contentblocks/', blank=True, default='', help_text='Optional image')
+    url = models.CharField(max_length=255, blank=True, default='', help_text='eg. link image / title somewhere http://awesome.com/ or /awesome/page/')
+    target = models.CharField(max_length=255, blank=True, default='', help_text='eg. open image / title link in "_blank" window', choices=TARGET_CHOICES)
     content_type = models.ForeignKey(ContentType, blank=True, null=True, help_text="""Choose an existing item type.<br>The most common choices will be Expert, etc.""")
     object_id = models.PositiveIntegerField(blank=True, null=True, help_text="""Type in the ID of the item you want to choose. You should see the title appear beside the box.""")
     content_object = generic.GenericForeignKey('content_type', 'object_id')
@@ -236,7 +274,7 @@ class Category(CommonAbstractModel):
         return self.title
 
 
-class Article(TextMixin, CommonAbstractModel):
+class Article(TextMixin, UrlMixin, CommonAbstractModel):
     title = models.CharField(max_length=255)
     slug = AutoSlugField(editable=True, populate_from='title')
     post_date = models.DateTimeField(editable=True)
@@ -250,6 +288,10 @@ class Article(TextMixin, CommonAbstractModel):
     categories = models.ManyToManyField('simple_cms.Category', blank=True, related_name='articles')
     allow_comments = models.BooleanField(default=True)
     author = models.ForeignKey(User, blank=True, null=True)
+    url = models.CharField(max_length=255, blank=True, default='', help_text='eg. link somewhere else http://awesome.com/ or /awesome/page/')
+    target = models.CharField(max_length=255, blank=True, default='', help_text='eg. open link in "_blank" window', choices=TARGET_CHOICES)
+    display_title = models.BooleanField(default=True, help_text='Display title on list view?')
+    seo = generic.GenericRelation(Seo)
     
     class Meta:
         ordering = ['-post_date']
@@ -265,3 +307,101 @@ class Article(TextMixin, CommonAbstractModel):
     has_excerpt.admin_order_field = 'excerpt'
     has_excerpt.allow_tags = True
     
+    def get_target(self):
+        if self.target:
+            return 'target="%s"' % self.target
+        return ''
+
+"""
+class Venue(CommonAbstractModel):
+    name = models.CharField(max_length=255)
+    slug = AutoSlugField(editable=True, populate_from='name')
+    url = models.CharField(max_length=255, blank=True, default='')
+    description = models.TextField(blank=True, default='')
+    city = models.CharField(max_length=255, blank=True, default='')
+    state = models.CharField(max_length=255, blank=True, default='')
+    country = CountryField(default='US')
+    address = models.CharField(max_length=255, blank=True, default='')
+    address_extended = models.CharField(max_length=255, blank=True, default='')
+    postal_code = models.CharField(max_length=255, blank=True, default='')
+    gmt_offset = models.CharField(max_length=255, blank=True, default='', help_text='Eg. -07:00')
+    
+    class Meta:
+        ordering = ['name']
+    
+    def __unicode__(self):
+        return '%s' % self.name
+    
+    @property
+    def map_address(self):
+        tA = []
+        if self.location_city:
+            tA.append(self.location_city)
+        if self.location_state:
+            tA.append(self.location_state)
+        tA.append(self.location_country.code)
+        return ', '.join(tA)
+
+
+class EventManager(models.Manager):
+
+    def get_active(self):
+        return self.get_query_set().filter(active=True)
+
+    def upcoming(self):
+        return self.get_active().filter(start_datetime__gte=datetime.date.today())
+
+    def past(self):
+        return self.get_active().filter(start_datetime__lte=datetime.date.today()).order_by('-start_datetime')
+
+
+class Event(TextMixin, CommonAbstractModel):
+    title = models.CharField(max_length=255, blank=True, default='')
+    slug = AutoSlugField(editable=True, populate_from=('title'), allow_duplicates=True)
+    start_datetime = models.DateTimeField(verbose_name="Event Starts on",
+        help_text="Date format, YYY-MM-DD. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time format, HH:MM:SS (24-hour clock)<br>Enter time as local to the event.",
+        blank=True, null=True)
+    end_datetime = models.DateTimeField(verbose_name="Event Ends on",
+        help_text="Date format, YYY-MM-DD. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time format, HH:MM:SS (24-hour clock)<br>Enter time as local to the event.",
+        blank=True, null=True)
+    display_time = models.BooleanField(default=True)
+    venue = models.ForeignKey(Venue)
+    text = models.TextField(blank=True, default='')
+    format = models.CharField(max_length=255, blank=True, default='', choices=FORMAT_CHOICES)
+    render_as_template = models.BooleanField(default=False)
+    excerpt = models.TextField(blank=True, default='')
+    key_image = models.ImageField(upload_to='uploads/events/', blank=True, default='')
+    tickets_url = models.CharField(max_length=255, blank=True, default='')
+    tags = TaggableManager(blank=True)
+    objects = EventManager()
+    
+    class Meta:
+        ordering = ['start_datetime', 'end_datetime']
+    
+    def __unicode__(self):
+        return '%s' % (self.pk)
+    
+    @property
+    def is_past(self):
+        now = datetime.datetime.now()
+        
+        if self.end_datetime:
+            if (self.end_datetime > now):
+                return False
+            else:
+                return True
+        elif self.start_datetime:
+            if (self.start_datetime < now):
+                return True
+            else: 
+                return False
+        else: 
+            return True
+    
+    @property
+    def spanning(self):
+        if self.end_datetime:
+            if self.end_datetime.date() != self.start_datetime.date():
+                return True
+        return False
+"""

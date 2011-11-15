@@ -11,14 +11,14 @@ except ImportError:
 
 setup(
     name='django-simple-cms',
-    version='0.0.8',
+    version='0.2.0',
     description='Simple CMS for your django powered website',
     author='Charles Mastin',
     author_email='charles@bricksf.com',
     url='https://github.com/charlesmastin/django-simple-cms/',
     license='MIT',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Framework :: Django',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT',
