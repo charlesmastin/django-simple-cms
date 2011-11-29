@@ -38,8 +38,8 @@ class Deployment(object):
     def deploy(self):
         self.prepare_local()
         self.prepare_remote()
-        self.backup_remote_db()
         self.deploy_code()
+        self.backup_remote_db()
         self.install_virtualenv()
         self.update_remote_db()
         self.finalize_remote()
@@ -50,8 +50,8 @@ class Deployment(object):
     def manual_deploy(self):
         self.prepare_local()
         self.prepare_remote()
-        self.backup_remote_db()
         self.deploy_code()
+        self.backup_remote_db()
         puts("Code staged, get to steppin")
         open_shell(command='cd %s/d/hot' % self.env['rpath'])
         self.finalize_remote()
