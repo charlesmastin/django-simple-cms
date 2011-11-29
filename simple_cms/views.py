@@ -68,6 +68,10 @@ class ArticleTagView(ListView):
     def get_queryset(self):
         return Article.objects.get_active().filter(tags__slug__in=[self.tag])
 
+    def get_context_data(self, **kwargs):
+        context = super(ArticleTagView, self).get_context_data(**kwargs)
+        context.update({'tag': self.tag})
+        return context
 
 class ArticleCategoryView(ListView):
 
@@ -77,6 +81,11 @@ class ArticleCategoryView(ListView):
 
     def get_queryset(self):
         return Article.objects.get_active().filter(categories__slug__in=[self.category])
+
+    def get_context_data(self, **kwargs):
+        context = super(ArticleCategoryView, self).get_context_data(**kwargs)
+        context.update({'category': self.category})
+        return context
 
 
 class ArticleSearchView(ListView):
