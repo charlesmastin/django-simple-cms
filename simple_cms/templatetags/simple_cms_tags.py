@@ -1,6 +1,7 @@
 from django import template
 from django.template import Node
 from django.contrib.sites.models import Site
+from django.contrib.contenttypes.models import ContentType
 
 from simple_cms.models import Navigation, Block
 from simple_cms.forms import ArticleSearchForm
@@ -76,8 +77,8 @@ def render_as_template(value, request):
 
 class NavigationBlocksNode(template.Node):
     
-    def __init__(self, nav_item, var_name, group_name=''):
-        self.nav_item = template.Variable(nav_item)
+    def __init__(self, instance, var_name, group_name=''):
+        self.instance = template.Variable(instance)
         self.var_name = var_name
         self.group_name = None
         if group_name != '':
@@ -85,31 +86,35 @@ class NavigationBlocksNode(template.Node):
     
     def render(self, context):
         blocks = None
-        nav = self.nav_item.resolve(context)
+        instance = self.instance.resolve(context)
         # spin this off into a separate template tag perhaps
         # we could just filter it all out afterwards, but heck, do 2 optimized queries
         # dynamic args, yo, easy peazy
+        # navigation_type = ContentType.objects.get_for_model(Navigation)
+        
         try:
             if self.group_name:
                 group = self.group_name.resolve(context)
-                blocks = [block.block for block in nav.navigationblocks_set.filter(active=True, group__title=group)]
-                if nav.inherit_blocks:
-                    while nav.parent:
-                        nav = nav.parent
-                        for block in nav.navigationblocks_set.filter(active=True, group__title=group):
-                            blocks.append(block.block)
-                        if not nav.inherit_blocks:
-                            break
+                blocks = [block.block for block in instance.blocks.filter(active=True, group__title=group)]
+                if hasattr(instance, 'parent') and hasattr(instance, 'inherit_blocks'):
+                    if instance.inherit_blocks:
+                        while instance.parent:
+                            instance = instance.parent
+                            for block in instance.blocks.filter(active=True, group__title=group):
+                                blocks.append(block.block)
+                            if not instance.inherit_blocks:
+                                break
             
             else:
-                blocks = [block.block for block in nav.navigationblocks_set.filter(active=True)]
-                if nav.inherit_blocks:
-                    while nav.parent:
-                        nav = nav.parent
-                        for block in nav.navigationblocks_set.filter(active=True):
-                            blocks.append(block.block)
-                        if not nav.inherit_blocks:
-                            break
+                blocks = [block.block for block in instance.blocks.filter(active=True)]
+                if hasattr(instance, 'parent') and hasattr(instance, 'inherit_blocks'):
+                    if instance.inherit_blocks:
+                        while instance.parent:
+                            instance = instance.parent
+                            for block in instance.blocks.filter(active=True):
+                                blocks.append(block.block)
+                            if not instance.inherit_blocks:
+                                break
         except:
             pass
         context[self.var_name] = blocks
@@ -120,7 +125,7 @@ class NavigationBlocksNode(template.Node):
 def get_blocks(parser, token):
     """
     Tag should be called like so:
-        {% get_blocks for <nav object> [<group string>] as <variable> %}
+        {% get_blocks for <model instance> [<group string>] as <variable> %}
     """
     try:
         tag_name, arg = token.contents.split(None, 1)

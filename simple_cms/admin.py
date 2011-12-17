@@ -3,10 +3,6 @@ from django import forms
 
 from simple_cms.models import *
 
-class BlockInline(admin.TabularInline):
-    model = NavigationBlocks
-    extra = 0
-
 class NavigationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(NavigationForm, self).__init__(*args, **kwargs)
@@ -15,23 +11,25 @@ class NavigationForm(forms.ModelForm):
     class Meta:
         model = Navigation
 
+
 class SeoInline(generic.GenericStackedInline):
     model = Seo
     extra = 0
     max_num = 1
 
 
-class BlockObjectAssociationInline(generic.GenericTabularInline):
-    model = BlockObjectAssociation
+class RelatedBlockInline(generic.GenericTabularInline):
+    model = RelatedBlock
     extra = 0
+
 
 class NavigationAdmin(admin.ModelAdmin):
     form = NavigationForm
-    list_display = ['title', 'slug', 'order', 'parent', 'blocks', 'view', 'active']
+    list_display = ['title', 'slug', 'order', 'parent', 'num_blocks', 'view', 'active']
     list_filter = ['group', 'site__name', 'active']
     save_on_top = True
     prepopulated_fields = {'slug': ('title',)}
-    inlines = [BlockObjectAssociationInline, SeoInline]
+    inlines = [RelatedBlockInline, SeoInline]
     search_fields = ['title', 'text']
     fieldsets = (
         (None, {
@@ -58,6 +56,7 @@ class NavigationAdmin(admin.ModelAdmin):
         }),
     )
 
+
 class BlockAdmin(admin.ModelAdmin):
     list_display = ('key', 'title', 'url', 'image', 'format')
     #list_filter = ('format', )
@@ -83,6 +82,7 @@ class BlockAdmin(admin.ModelAdmin):
         }),
     )
 
+
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ['title', 'parent', 'order', 'active']
     list_filter = ['active']
@@ -93,6 +93,7 @@ class CategoryAdmin(admin.ModelAdmin):
 class CategoryInline(admin.TabularInline):
     model = Article.categories.through
     extra = 0
+
 
 class ArticleAdmin(admin.ModelAdmin):
     list_display = ['title', 'post_date', 'has_excerpt', 'key_image', 'active']

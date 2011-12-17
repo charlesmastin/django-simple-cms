@@ -87,6 +87,55 @@ class Seo(models.Model):
     def __unicode__(self):
         return '%s' % self.id
 
+class BlockGroup(models.Model):
+    title = models.CharField(max_length=255)
+    
+    class Meta:
+        ordering = ('title',)
+    
+    def __unicode__(self):
+        return self.title
+
+
+class Block(TextMixin, UrlMixin, CommonAbstractModel):
+    key = models.CharField(max_length=255, help_text='Internal name to refer to this item')
+    title = models.CharField(max_length=255, blank=True, help_text='Optional header on sidebar')
+    text = models.TextField(blank=True, default='')
+    format = models.CharField(max_length=255, blank=True, default='', choices=FORMAT_CHOICES)
+    render_as_template = models.BooleanField(default=False)
+    image = models.ImageField(upload_to='uploads/contentblocks/', blank=True, default='', help_text='Optional image')
+    url = models.CharField(max_length=255, blank=True, default='', help_text='eg. link image / title somewhere http://awesome.com/ or /awesome/page/')
+    target = models.CharField(max_length=255, blank=True, default='', help_text='eg. open image / title link in "_blank" window', choices=TARGET_CHOICES)
+    content_type = models.ForeignKey(ContentType, blank=True, null=True, help_text="""Choose an existing item type.<br>The most common choices will be Expert, etc.""")
+    object_id = models.PositiveIntegerField(blank=True, null=True, help_text="""Type in the ID of the item you want to choose. You should see the title appear beside the box.""")
+    content_object = generic.GenericForeignKey('content_type', 'object_id')
+    
+    def __unicode__(self):
+        return self.key
+
+
+class RelatedBlock(CommonAbstractModel):
+    """ Linking Blocks to any object """
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = generic.GenericForeignKey('content_type', 'object_id')
+    block = models.ForeignKey('simple_cms.Block')
+    group = models.ForeignKey('simple_cms.BlockGroup', blank=True, null=True)
+    order = PositionField(collection=('content_type', 'object_id', 'group'))
+    """ Because of the crummy status of the PositionField among other complications
+    (leaving the content_type null and PositionField collection dependency)
+    it is necessary to maintain a separate model for arbitrary grouping of blocks,
+    eg, objects that don't necessarily map to a page, or page hierchy so simply,
+    instead using the BlockGroup to unite them
+    """
+    
+
+    class Meta:
+        ordering = ['order', ]
+
+    def __unicode__(self):
+        return '%s - %s' % (self.content_object, self.block)
+
 class NavigationGroup(models.Model):
     title = models.CharField(max_length=255)
     
@@ -120,6 +169,7 @@ class Navigation(TextMixin, CommonAbstractModel):
     redirect_permanent = models.BooleanField(default=False)
     inherit_blocks = models.BooleanField(default=True, verbose_name="Inherit Blocks")
     seo = generic.GenericRelation(Seo)
+    blocks = generic.GenericRelation(RelatedBlock)
 
     class Meta:
         unique_together = (('site', 'slug', 'parent'),)
@@ -133,9 +183,9 @@ class Navigation(TextMixin, CommonAbstractModel):
         from django.core.exceptions import ValidationError
         if self.parent == self:
             raise ValidationError('Can\'t set parent to self.')
-
-    def blocks(self):
-        l = len(self.navigationblocks_set.all())
+    
+    def num_blocks(self):
+        l = len(self.blocks.all())
         if l:
             return l
         return ''
@@ -214,73 +264,6 @@ class Navigation(TextMixin, CommonAbstractModel):
     @property
     def search_description(self):
         return self.text
-
-
-class BlockGroup(models.Model):
-    title = models.CharField(max_length=255)
-    
-    class Meta:
-        ordering = ('title',)
-    
-    def __unicode__(self):
-        return self.title
-
-
-class Block(TextMixin, UrlMixin, CommonAbstractModel):
-    key = models.CharField(max_length=255, help_text='Internal name to refer to this item')
-    title = models.CharField(max_length=255, blank=True, help_text='Optional header on sidebar')
-    text = models.TextField(blank=True, default='')
-    format = models.CharField(max_length=255, blank=True, default='', choices=FORMAT_CHOICES)
-    render_as_template = models.BooleanField(default=False)
-    image = models.ImageField(upload_to='uploads/contentblocks/', blank=True, default='', help_text='Optional image')
-    url = models.CharField(max_length=255, blank=True, default='', help_text='eg. link image / title somewhere http://awesome.com/ or /awesome/page/')
-    target = models.CharField(max_length=255, blank=True, default='', help_text='eg. open image / title link in "_blank" window', choices=TARGET_CHOICES)
-    content_type = models.ForeignKey(ContentType, blank=True, null=True, help_text="""Choose an existing item type.<br>The most common choices will be Expert, etc.""")
-    object_id = models.PositiveIntegerField(blank=True, null=True, help_text="""Type in the ID of the item you want to choose. You should see the title appear beside the box.""")
-    content_object = generic.GenericForeignKey('content_type', 'object_id')
-    
-    def __unicode__(self):
-        return self.key
-
-
-class BlockObjectAssociation(CommonAbstractModel):
-    """ Linking Blocks to any object """
-    content_type = models.ForeignKey(ContentType)
-    object_id = models.PositiveIntegerField()
-    content_object = generic.GenericForeignKey('content_type', 'object_id')
-    block = models.ForeignKey('simple_cms.Block')
-    group = models.ForeignKey('simple_cms.BlockGroup', blank=True, null=True)
-    order = PositionField(collection=('content_type', 'object_id', 'group'))
-    """ Because of the crummy status of the PositionField among other complications
-    (leaving the content_type null and PositionField collection dependency)
-    it is necessary to maintain a separate model for arbitrary grouping of blocks,
-    eg, objects that don't necessarily map to a page, or page hierchy so simply,
-    instead using the BlockGroup to unite them
-    """
-    
-
-    class Meta:
-        ordering = ['order', ]
-        verbose_name = "Associated Block"
-        verbose_name_plural = "Associated Blocks"
-
-    def __unicode__(self):
-        return '%s - %s' % (self.content_object, self.block)
-
-class NavigationBlocks(CommonAbstractModel):
-    """ Linking Navigation pages with Blocks. """
-    navigation = models.ForeignKey('simple_cms.Navigation')
-    block = models.ForeignKey('simple_cms.Block')
-    group = models.ForeignKey('simple_cms.BlockGroup', blank=True, null=True)
-    order = PositionField(collection=('navigation', 'group'))
-
-    class Meta:
-        ordering = ['order', ]
-        verbose_name = "Navigation Block"
-        verbose_name_plural = "Navigation Blocks"
-
-    def __unicode__(self):
-        return '%s - %s' % (self.navigation, self.block)
 
 
 class Category(CommonAbstractModel):

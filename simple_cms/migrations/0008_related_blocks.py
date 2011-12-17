@@ -1,30 +1,32 @@
 # encoding: utf-8
 import datetime
 from south.db import db
-from south.v2 import DataMigration
+from south.v2 import SchemaMigration
 from django.db import models
 
-from simple_cms.models import *
-from django.contrib.contenttypes.models import ContentType
-
-class Migration(DataMigration):
+class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        for item in NavigationBlocks.objects.all():
-            n = RelatedBlock()
-            n.updated_at = item.updated_at
-            n.created_at = item.created_at
-            n.active = item.active
-            n.block = item.block
-            n.order = item.order
-            n.group = item.group
-            n.content_type = ContentType.objects.get_for_model(Navigation)
-            n.object_id = item.navigation.pk
-            n.save()
+        
+        # Adding model 'BlockObjectAssociation'
+        db.create_table('simple_cms_relatedblock', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime.now, blank=True)),
+            ('updated_at', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime.now, blank=True)),
+            ('active', self.gf('django.db.models.fields.BooleanField')(default=True)),
+            ('content_type', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['contenttypes.ContentType'])),
+            ('object_id', self.gf('django.db.models.fields.PositiveIntegerField')()),
+            ('block', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['simple_cms.Block'])),
+            ('group', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['simple_cms.BlockGroup'], null=True, blank=True)),
+            ('order', self.gf('django.db.models.fields.IntegerField')(default=-1)),
+        ))
+        db.send_create_signal('simple_cms', ['BlockObjectAssociation'])
 
 
     def backwards(self, orm):
-        "Write your backwards methods here."
+        
+        # Deleting model 'BlockObjectAssociation'
+        db.delete_table('simple_cms_relatedblock')
 
 
     models = {

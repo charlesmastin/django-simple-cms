@@ -8,25 +8,42 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         
-        # Adding model 'BlockObjectAssociation'
-        db.create_table('simple_cms_blockobjectassociation', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime.now, blank=True)),
-            ('updated_at', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime.now, blank=True)),
-            ('active', self.gf('django.db.models.fields.BooleanField')(default=True)),
-            ('content_type', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['contenttypes.ContentType'])),
-            ('object_id', self.gf('django.db.models.fields.PositiveIntegerField')()),
-            ('block', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['simple_cms.Block'])),
-            ('group', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['simple_cms.BlockGroup'], null=True, blank=True)),
-            ('order', self.gf('django.db.models.fields.IntegerField')(default=-1)),
-        ))
-        db.send_create_signal('simple_cms', ['BlockObjectAssociation'])
+        # Deleting model 'NavigationBlocks'
+        db.delete_table('simple_cms_navigationblocks')
+
+        # Changing field 'Category.slug'
+        db.alter_column('simple_cms_category', 'slug', self.gf('django_extensions.db.fields.AutoSlugField')(allow_duplicates=False, max_length=50, separator=u'-', populate_from='title', overwrite=False))
+
+        # Changing field 'Article.slug'
+        db.alter_column('simple_cms_article', 'slug', self.gf('django_extensions.db.fields.AutoSlugField')(allow_duplicates=False, max_length=50, separator=u'-', populate_from='title', overwrite=False))
+
+        # Changing field 'Navigation.slug'
+        db.alter_column('simple_cms_navigation', 'slug', self.gf('django_extensions.db.fields.AutoSlugField')(allow_duplicates=False, max_length=50, separator=u'-', populate_from='title', overwrite=False))
 
 
     def backwards(self, orm):
         
-        # Deleting model 'BlockObjectAssociation'
-        db.delete_table('simple_cms_blockobjectassociation')
+        # Adding model 'NavigationBlocks'
+        db.create_table('simple_cms_navigationblocks', (
+            ('updated_at', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime.now, blank=True)),
+            ('group', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['simple_cms.BlockGroup'], null=True, blank=True)),
+            ('active', self.gf('django.db.models.fields.BooleanField')(default=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime.now, blank=True)),
+            ('navigation', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['simple_cms.Navigation'])),
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('block', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['simple_cms.Block'])),
+            ('order', self.gf('django.db.models.fields.IntegerField')(default=-1)),
+        ))
+        db.send_create_signal('simple_cms', ['NavigationBlocks'])
+
+        # Changing field 'Category.slug'
+        db.alter_column('simple_cms_category', 'slug', self.gf('django.db.models.fields.SlugField')(max_length=50))
+
+        # Changing field 'Article.slug'
+        db.alter_column('simple_cms_article', 'slug', self.gf('django.db.models.fields.SlugField')(max_length=50))
+
+        # Changing field 'Navigation.slug'
+        db.alter_column('simple_cms_navigation', 'slug', self.gf('django.db.models.fields.SlugField')(max_length=50))
 
 
     models = {
@@ -81,7 +98,7 @@ class Migration(SchemaMigration):
             'key_image': ('django.db.models.fields.files.ImageField', [], {'default': "''", 'max_length': '100', 'blank': 'True'}),
             'post_date': ('django.db.models.fields.DateTimeField', [], {}),
             'render_as_template': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'slug': ('django.db.models.fields.SlugField', [], {'db_index': 'True', 'max_length': '50', 'blank': 'True'}),
+            'slug': ('django_extensions.db.fields.AutoSlugField', [], {'allow_duplicates': 'False', 'max_length': '50', 'separator': "u'-'", 'blank': 'True', 'populate_from': "'title'", 'overwrite': 'False', 'db_index': 'True'}),
             'target': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'blank': 'True'}),
             'text': ('django.db.models.fields.TextField', [], {}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
@@ -110,18 +127,6 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '255'})
         },
-        'simple_cms.blockobjectassociation': {
-            'Meta': {'ordering': "['order']", 'object_name': 'BlockObjectAssociation'},
-            'active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'block': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['simple_cms.Block']"}),
-            'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['contenttypes.ContentType']"}),
-            'created_at': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now', 'blank': 'True'}),
-            'group': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['simple_cms.BlockGroup']", 'null': 'True', 'blank': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'object_id': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'order': ('django.db.models.fields.IntegerField', [], {'default': '-1'}),
-            'updated_at': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now', 'blank': 'True'})
-        },
         'simple_cms.category': {
             'Meta': {'ordering': "['title']", 'object_name': 'Category'},
             'active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
@@ -129,7 +134,7 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'order': ('django.db.models.fields.IntegerField', [], {'default': '-1'}),
             'parent': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['simple_cms.Category']", 'null': 'True', 'blank': 'True'}),
-            'slug': ('django.db.models.fields.SlugField', [], {'db_index': 'True', 'max_length': '50', 'blank': 'True'}),
+            'slug': ('django_extensions.db.fields.AutoSlugField', [], {'allow_duplicates': 'False', 'max_length': '50', 'separator': "u'-'", 'blank': 'True', 'populate_from': "'title'", 'overwrite': 'False', 'db_index': 'True'}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now', 'blank': 'True'})
         },
@@ -149,7 +154,7 @@ class Migration(SchemaMigration):
             'redirect_url': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'blank': 'True'}),
             'render_as_template': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'site': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'pages'", 'to': "orm['sites.Site']"}),
-            'slug': ('django.db.models.fields.SlugField', [], {'db_index': 'True', 'max_length': '50', 'blank': 'True'}),
+            'slug': ('django_extensions.db.fields.AutoSlugField', [], {'allow_duplicates': 'False', 'max_length': '50', 'separator': "u'-'", 'blank': 'True', 'populate_from': "'title'", 'overwrite': 'False', 'db_index': 'True'}),
             'target': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'blank': 'True'}),
             'template': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'blank': 'True'}),
             'text': ('django.db.models.fields.TextField', [], {'default': "''", 'blank': 'True'}),
@@ -158,21 +163,22 @@ class Migration(SchemaMigration):
             'url': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'blank': 'True'}),
             'view': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'blank': 'True'})
         },
-        'simple_cms.navigationblocks': {
-            'Meta': {'ordering': "['order']", 'object_name': 'NavigationBlocks'},
-            'active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'block': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['simple_cms.Block']"}),
-            'created_at': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now', 'blank': 'True'}),
-            'group': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['simple_cms.BlockGroup']", 'null': 'True', 'blank': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'navigation': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['simple_cms.Navigation']"}),
-            'order': ('django.db.models.fields.IntegerField', [], {'default': '-1'}),
-            'updated_at': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now', 'blank': 'True'})
-        },
         'simple_cms.navigationgroup': {
             'Meta': {'ordering': "('title',)", 'object_name': 'NavigationGroup'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '255'})
+        },
+        'simple_cms.relatedblock': {
+            'Meta': {'ordering': "['order']", 'object_name': 'RelatedBlock'},
+            'active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'block': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['simple_cms.Block']"}),
+            'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['contenttypes.ContentType']"}),
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now', 'blank': 'True'}),
+            'group': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['simple_cms.BlockGroup']", 'null': 'True', 'blank': 'True'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'object_id': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'order': ('django.db.models.fields.IntegerField', [], {'default': '-1'}),
+            'updated_at': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now', 'blank': 'True'})
         },
         'simple_cms.seo': {
             'Meta': {'unique_together': "(['content_type', 'object_id'],)", 'object_name': 'Seo'},
