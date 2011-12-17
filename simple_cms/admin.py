@@ -21,13 +21,17 @@ class SeoInline(generic.GenericStackedInline):
     max_num = 1
 
 
+class BlockObjectAssociationInline(generic.GenericTabularInline):
+    model = BlockObjectAssociation
+    extra = 0
+
 class NavigationAdmin(admin.ModelAdmin):
     form = NavigationForm
     list_display = ['title', 'slug', 'order', 'parent', 'blocks', 'view', 'active']
     list_filter = ['group', 'site__name', 'active']
     save_on_top = True
     prepopulated_fields = {'slug': ('title',)}
-    inlines = [BlockInline, SeoInline]
+    inlines = [BlockObjectAssociationInline, SeoInline]
     search_fields = ['title', 'text']
     fieldsets = (
         (None, {

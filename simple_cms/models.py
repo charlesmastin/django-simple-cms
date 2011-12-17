@@ -243,6 +243,30 @@ class Block(TextMixin, UrlMixin, CommonAbstractModel):
         return self.key
 
 
+class BlockObjectAssociation(CommonAbstractModel):
+    """ Linking Blocks to any object """
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = generic.GenericForeignKey('content_type', 'object_id')
+    block = models.ForeignKey('simple_cms.Block')
+    group = models.ForeignKey('simple_cms.BlockGroup', blank=True, null=True)
+    order = PositionField(collection=('content_type', 'object_id', 'group'))
+    """ Because of the crummy status of the PositionField among other complications
+    (leaving the content_type null and PositionField collection dependency)
+    it is necessary to maintain a separate model for arbitrary grouping of blocks,
+    eg, objects that don't necessarily map to a page, or page hierchy so simply,
+    instead using the BlockGroup to unite them
+    """
+    
+
+    class Meta:
+        ordering = ['order', ]
+        verbose_name = "Associated Block"
+        verbose_name_plural = "Associated Blocks"
+
+    def __unicode__(self):
+        return '%s - %s' % (self.content_object, self.block)
+
 class NavigationBlocks(CommonAbstractModel):
     """ Linking Navigation pages with Blocks. """
     navigation = models.ForeignKey('simple_cms.Navigation')
