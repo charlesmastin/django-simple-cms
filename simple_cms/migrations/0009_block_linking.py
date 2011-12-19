@@ -7,6 +7,18 @@ from django.db import models
 from simple_cms.models import *
 from django.contrib.contenttypes.models import ContentType
 
+# Just for the purpose of running the migration. Awesome
+NavigationBlocks = type('NavigationBlocks', (models.Model,), {
+    "__module__": "simple_cms.models",
+    "navigation": models.ForeignKey('simple_cms.Navigation'),
+    "block": models.ForeignKey('simple_cms.Block'),
+    "group": models.ForeignKey('simple_cms.BlockGroup', blank=True, null=True),
+    "order": models.IntegerField(),
+    "active": models.BooleanField(),
+    "created_at": models.DateTimeField(),
+    "updated_at": models.DateTimeField(),
+})
+
 class Migration(DataMigration):
 
     def forwards(self, orm):
