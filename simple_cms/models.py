@@ -299,6 +299,7 @@ class Article(TextMixin, UrlMixin, CommonAbstractModel):
     target = models.CharField(max_length=255, blank=True, default='', help_text='eg. open link in "_blank" window', choices=TARGET_CHOICES)
     display_title = models.BooleanField(default=True, help_text='Display title on list view?')
     seo = generic.GenericRelation(Seo)
+    blocks = generic.GenericRelation(RelatedBlock)
     
     class Meta:
         ordering = ['-post_date']
