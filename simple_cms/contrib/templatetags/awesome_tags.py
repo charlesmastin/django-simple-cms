@@ -1,8 +1,60 @@
 from django import template
 from django.template import Node
+from django.db.models import get_model
 from django.contrib.sites.models import Site
 
 register = template.Library()
+
+# TODO: add order_by
+# or assume since this is about generic pulling of content, template designer can use template tags to manipulate
+class ModelObjectsNode(template.Node):
+    def __init__(self, model, var_name, limit=5):
+        self.model = template.Variable(model)
+        self.var_name = var_name
+        self.limit = int(limit)
+    
+    def render(self, context):
+        limit = self.limit
+        m = self.model.resolve(context).split('.')
+        model = get_model(m[0], m[1])
+        try:
+            # this is an assumption based on our models all being basedon on CommonAbstractModel
+            context[self.var_name] = model.objects.filter(active=True)[:limit]
+            return ''
+        except:
+            pass
+        context[self.var_name] = None
+        return ''
+
+@register.tag
+def get_model_objects(parser, token):
+    """
+    Tag should be called like so:
+        {% get_model_objects for <model> as <variable> [limit <num>] [order <string>] %}
+    """
+    
+    try:
+        tag_name, arg = token.contents.split(None, 1)
+    except ValueError:
+        raise template.TemplateSyntaxError, "%r tag requires arguments" % \
+                token.contents.split()[0]
+    bits = arg.split()
+    len_bits = len(bits)
+    if len_bits not in (4, 5, 6):
+        raise template.TemplateSyntaxError, "%r tag had invaild arguments: %s" % (
+                tag_name, arg)
+    if bits[0] != 'for':
+        raise template.TemplateSyntaxErorr, "First argument to %r must be 'for'" % \
+                tag_name
+    if bits[2] != 'as':
+        raise template.TemplateSyntaxErorr, "Third argument to %r must be 'as'" % \
+                tag_name
+    
+    if 3 < len_bits < 7:
+        if bits[4] == 'limit':
+            return ModelObjectsNode(bits[1], bits[3], bits[5])
+        else:
+            return ModelObjectsNode(bits[1], bits[3])
 
 class SorlNode(template.Node):
     def __init__(self, image, var_name):
