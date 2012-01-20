@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.safestring import mark_safe
+from django.utils.encoding import *
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.contrib.auth.models import User
@@ -111,7 +112,7 @@ class Block(TextMixin, UrlMixin, CommonAbstractModel):
     content_object = generic.GenericForeignKey('content_type', 'object_id')
     
     def __unicode__(self):
-        return self.key
+        return '%s' % (self.key)
 
 
 class RelatedBlock(CommonAbstractModel):
@@ -134,7 +135,7 @@ class RelatedBlock(CommonAbstractModel):
         ordering = ['order', ]
 
     def __unicode__(self):
-        return '%s - %s' % (self.content_object, self.block)
+        return '%s - %s' % (force_unicode(self.content_object), self.block)
 
 class NavigationGroup(models.Model):
     title = models.CharField(max_length=255)
@@ -143,7 +144,7 @@ class NavigationGroup(models.Model):
         ordering = ('title',)
     
     def __unicode__(self):
-        return self.title
+        return '%s' % self.title
 
 class Navigation(TextMixin, CommonAbstractModel):
     """
@@ -173,11 +174,11 @@ class Navigation(TextMixin, CommonAbstractModel):
 
     class Meta:
         unique_together = (('site', 'slug', 'parent'),)
-        ordering = ['site', 'title']
+        ordering = ['title']
         verbose_name_plural = 'Navigation'
 
     def __unicode__(self):
-        return self._chain()
+        return '%s' % self._chain()
 
     def clean(self):
         from django.core.exceptions import ValidationError

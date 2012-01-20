@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django import forms
+from django.contrib.sites.models import Site
 
 from simple_cms.models import *
 
@@ -7,6 +8,9 @@ class NavigationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(NavigationForm, self).__init__(*args, **kwargs)
         self.fields['text'].widget.attrs = {'cols':80, 'rows': 20}
+        if len(Site.objects.all()) == 1:
+            self.fields['site'].initial = Site.objects.all()[0]
+        self.fields['format'].initial = 'markdown'
 
     class Meta:
         model = Navigation
@@ -36,8 +40,8 @@ class NavigationAdmin(admin.ModelAdmin):
             'fields': (
                 'active',
                 ('title', 'slug'),
-                ('group', 'parent', 'order'),
-                'site',
+                ('site', 'group'),
+                ('parent', 'order'),
                 'text',
                 'format',
             ),
