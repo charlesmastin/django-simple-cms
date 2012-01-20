@@ -98,8 +98,17 @@ class CategoryInline(admin.TabularInline):
     model = Article.categories.through
     extra = 0
 
+class ArticleForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(ArticleForm, self).__init__(*args, **kwargs)
+        self.fields['text'].widget.attrs = {'cols':80, 'rows': 20}
+        self.fields['format'].initial = 'markdown'
+
+    class Meta:
+        model = Article
 
 class ArticleAdmin(admin.ModelAdmin):
+    form = ArticleForm
     list_display = ['title', 'post_date', 'has_excerpt', 'key_image', 'active']
     list_filter = ['active', 'post_date']
     date_hierarchy = 'post_date'
@@ -113,7 +122,6 @@ class ArticleAdmin(admin.ModelAdmin):
                 ('active', 'post_date'),
                 ('title', 'slug'),
                 'key_image',
-                'excerpt',
                 'text',
                 'format',
                 'tags',
@@ -123,6 +131,7 @@ class ArticleAdmin(admin.ModelAdmin):
         ('Advanced Options', {
             'classes': ('collapse',),
             'fields': (
+                'excerpt',
                 'render_as_template',
                 ('url', 'target'),
                 'display_title',
