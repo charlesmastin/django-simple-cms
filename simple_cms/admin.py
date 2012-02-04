@@ -114,6 +114,7 @@ class ArticleAdmin(admin.ModelAdmin):
     date_hierarchy = 'post_date'
     prepopulated_fields = {'slug': ('title',)}
     save_on_top = True
+    search_fields = ['title', 'text', 'excerpt']
     exclude = ['categories']
     inlines = [CategoryInline, SeoInline]
     fieldsets = (
