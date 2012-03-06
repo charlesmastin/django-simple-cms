@@ -80,6 +80,7 @@ class BlockAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
             'fields': (
                 'render_as_template',
+                'bypass_layout',
                 'content_type',
                 'object_id',
             ),

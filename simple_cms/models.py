@@ -107,6 +107,7 @@ class Block(TextMixin, UrlMixin, CommonAbstractModel):
     image = models.ImageField(upload_to='uploads/contentblocks/', blank=True, default='', help_text='Optional image')
     url = models.CharField(max_length=255, blank=True, default='', help_text='eg. link image / title somewhere http://awesome.com/ or /awesome/page/')
     target = models.CharField(max_length=255, blank=True, default='', help_text='eg. open image / title link in "_blank" window', choices=TARGET_CHOICES)
+    bypass_layout = models.BooleanField(default=False, help_text='Render only text field content, no surrounding markup.')
     content_type = models.ForeignKey(ContentType, blank=True, null=True, help_text="""Choose an existing item type.<br>The most common choices will be Expert, etc.""")
     object_id = models.PositiveIntegerField(blank=True, null=True, help_text="""Type in the ID of the item you want to choose. You should see the title appear beside the box.""")
     content_object = generic.GenericForeignKey('content_type', 'object_id')
