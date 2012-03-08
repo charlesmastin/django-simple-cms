@@ -99,7 +99,7 @@ class BlockGroup(models.Model):
 
 
 class Block(TextMixin, UrlMixin, CommonAbstractModel):
-    key = models.CharField(max_length=255, help_text='Internal name to refer to this item')
+    key = models.CharField(max_length=255, unique=True, help_text='Internal name to refer to this item')
     title = models.CharField(max_length=255, blank=True, help_text='Optional header on sidebar')
     text = models.TextField(blank=True, default='')
     format = models.CharField(max_length=255, blank=True, default='', choices=FORMAT_CHOICES)
