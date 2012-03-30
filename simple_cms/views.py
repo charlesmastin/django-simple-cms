@@ -34,9 +34,12 @@ class NavigationView(View):
                 else:
                     cls = get_callable(context['page'].view)
                     return cls(request)
-            for i in context['pageA']:
-                if i.template:
-                    self.template = i.template
+            if context['page'].template:
+                self.template = context['page'].template
+            elif context['page'].inherit_template:
+                for i in context['pageA']:
+                    if i.template:
+                        self.template = i.template
             return render(request, self.template, {}, context_instance=context)
         raise Http404
 

@@ -4,6 +4,16 @@ from django.contrib.sites.models import Site
 
 from simple_cms.models import *
 
+def action_set_active(modeladmin, request, queryset):
+    queryset.update(active=True)
+
+action_set_active.short_description = 'Make published'
+
+def action_set_inactive(modeladmin, request, queryset):
+    queryset.update(active=False)
+
+action_set_inactive.short_description = 'Make un-published'
+
 class NavigationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(NavigationForm, self).__init__(*args, **kwargs)
@@ -35,6 +45,7 @@ class NavigationAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('title',)}
     inlines = [RelatedBlockInline, SeoInline]
     search_fields = ['title', 'text']
+    actions = [action_set_active, action_set_inactive]
     fieldsets = (
         (None, {
             'fields': (
@@ -50,11 +61,11 @@ class NavigationAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
             'fields': (
                 'page_title',
+                'render_as_template',
                 'homepage',
                 'inherit_blocks',
-                'render_as_template',
                 ('url', 'target'),
-                ('view', 'template'),
+                ('view', 'template', 'inherit_template'),
                 ('redirect_url', 'redirect_permanent'),
             ),
         }),
@@ -64,6 +75,7 @@ class NavigationAdmin(admin.ModelAdmin):
 class BlockAdmin(admin.ModelAdmin):
     list_display = ('key', 'title', 'url', 'image', 'format')
     #list_filter = ('format', )
+    actions = [action_set_active, action_set_inactive]
     fieldsets = (
         (None, {
             'fields': (
@@ -92,7 +104,7 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ['title', 'parent', 'order', 'active']
     list_filter = ['active']
     prepopulated_fields = {'slug': ('title',)}
-    
+    actions = [action_set_active, action_set_inactive]
 
 
 class CategoryInline(admin.TabularInline):
@@ -118,6 +130,7 @@ class ArticleAdmin(admin.ModelAdmin):
     search_fields = ['title', 'text', 'excerpt']
     exclude = ['categories']
     inlines = [CategoryInline, SeoInline]
+    actions = [action_set_active, action_set_inactive]
     fieldsets = (
         (None, {
             'fields': (

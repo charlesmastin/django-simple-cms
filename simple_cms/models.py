@@ -170,6 +170,7 @@ class Navigation(TextMixin, CommonAbstractModel):
     redirect_url = models.CharField(max_length=255, blank=True, default='')
     redirect_permanent = models.BooleanField(default=False)
     inherit_blocks = models.BooleanField(default=True, verbose_name="Inherit Blocks")
+    inherit_template = models.BooleanField(default=False, verbose_name="Inherit Template")
     seo = generic.GenericRelation(Seo)
     blocks = generic.GenericRelation(RelatedBlock)
 
