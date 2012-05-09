@@ -50,3 +50,32 @@ def is_external_url(url, path):
         except:
             pass
     return False
+
+def digg_paginator(records, ADJACENT_PAGES=3, BORDER_PAGES=2, BASE_RANGE=10):
+    pages = []
+    leading = []
+    trailing = []
+    
+    # only 1 set
+    if records.paginator.num_pages <= BASE_RANGE:
+        # be sure to only rock the num of pages
+        if records.paginator.num_pages > 1:
+            pages = xrange(1, records.paginator.num_pages+1)
+    # in the first range, with trailing
+    elif records.paginator.num_pages > BASE_RANGE and records.number < BASE_RANGE+1:
+        pages = xrange(1, BASE_RANGE+1)
+        trailing = xrange(records.paginator.num_pages-BORDER_PAGES+1, records.paginator.num_pages+1)
+    # within the end range
+    elif records.paginator.num_pages - records.number <= ADJACENT_PAGES*2 + 1:
+        leading = xrange(1, BORDER_PAGES+1)
+        pages = xrange(records.paginator.num_pages-(ADJACENT_PAGES*2+1), records.paginator.num_pages+1)
+    else:
+        leading = xrange(1, BORDER_PAGES+1)
+        pages = xrange(records.number - ADJACENT_PAGES, records.number + ADJACENT_PAGES+1)
+        trailing = xrange(records.paginator.num_pages-BORDER_PAGES+1, records.paginator.num_pages+1)
+    
+    return {
+        'pages': pages,
+        'leading': leading,
+        'trailing': trailing,
+    }
