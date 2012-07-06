@@ -3,7 +3,7 @@ from django.template import Node
 from django.contrib.sites.models import Site
 from django.contrib.contenttypes.models import ContentType
 
-from simple_cms.models import Navigation, Block
+from simple_cms.models import Navigation, Block, Article
 from simple_cms.forms import ArticleSearchForm
 
 register = template.Library()
@@ -160,3 +160,24 @@ def get_article_search_form(parser, token):
                 token.contents.split()[0]
     bits = arg.split()
     return ArticleSearchFormNode(bits[1])
+
+def get_articles(articles, length):
+    count = len(articles)
+    if length:
+        count = articles.count()
+        articles = articles[:length]
+    return {
+        'count': count,
+        'objects': articles,
+    }
+
+@register.assignment_tag
+def get_articles_for_tag(tag, length=None):
+    articles = Article.objects.get_active().filter(tags__slug__in=[tag])
+    return get_articles(articles, length)
+
+@register.assignment_tag
+def get_articles_for_category(category, length=None):
+    articles = Article.objects.get_active().filter(category__slug__in=[category])
+    return get_articles(articles, length)
+
