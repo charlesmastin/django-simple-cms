@@ -33,6 +33,7 @@ class DataGridView(ListView):
                 querystring['sort_direction'] = 'asc'
                 if header['column'] == self.sort_column:
                     header['class'] = 'active'
+                    header['active'] = True
                     if self.sort_direction == 'desc':
                         header['class'] = '%s asc' % header['class']
                         querystring['sort_direction'] = 'asc'
@@ -41,6 +42,7 @@ class DataGridView(ListView):
                         querystring['sort_direction'] = 'desc'
                 else:
                     header['class'] = ''
+                    header['active'] = False
                     pass
                 header['href'] = querystring.urlencode()
             except KeyError:
@@ -53,6 +55,20 @@ class DataGridView(ListView):
     
     def get_context_data(self, *args, **kwargs):
         context = super(DataGridView, self).get_context_data(*args, **kwargs)
+        # operates with use case of a single datagrid per page / view
+        # we could abstract that so we could use the sorting logic to return only queryset and variables
+        # with a namespace
+        context['sort_column'] = self.sort_column
+        context['sort_direction'] = self.sort_direction
+        # try to find a match
+        for header in self.headers:
+            if header['column'] == self.sort_column:
+                try:
+                    context['sort_column_label'] = header['label']
+                except:
+                    context['sort_column_label'] = self.sort_column
+                break
+
         context['headers'] = self.headers
         context['querystring'] = self.querystring.urlencode()
         if self.digg:
