@@ -31,7 +31,7 @@ class DataGridView(ListView):
             try:
                 querystring['sort_column'] = header['column']
                 querystring['sort_direction'] = 'asc'
-                if header['column'] == self.sort_column:
+                if header.get('column') == self.sort_column:
                     header['class'] = 'active'
                     header['active'] = True
                     if self.sort_direction == 'desc':
@@ -62,7 +62,7 @@ class DataGridView(ListView):
         context['sort_direction'] = self.sort_direction
         # try to find a match
         for header in self.headers:
-            if header['column'] == self.sort_column:
+            if header.get('column') == self.sort_column:
                 try:
                     context['sort_column_label'] = header['label']
                 except:
