@@ -24,3 +24,24 @@ class Translation(CommonAbstractModel):
     
     class Meta:
         abstract = True
+
+class Localization(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    description = models.CharField(max_length=255, default='', blank=True)
+    
+    class Meta:
+        ordering = ['name']
+    
+    def __unicode__(self):
+        return self.name
+
+class LocalizationTranslation(models.Model):
+    language = models.ForeignKey(Language)
+    localization = models.ForeignKey(Localization)
+    text = models.TextField()
+    
+    class Meta:
+        unique_together = ('language', 'localization')
+    
+    def __unicode__(self):
+        return self.text
