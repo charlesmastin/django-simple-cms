@@ -1,4 +1,4 @@
-from django.contrib.sites.models import Site
+from django.contrib.sites.models import Site, RequestSite
 from django.conf import settings
 
 from simple_cms.models import Navigation
@@ -17,9 +17,19 @@ class NavigationHelper(object):
         self.nav3_parent = None
         self.exact_match = False
         try:
-            self.site = Site.objects.get_current()
+            self.check_domain = settings.SIMPLE_CMS_CHECK_DOMAIN
         except:
-            self.site = Site.objects.get(pk=1)
+            self.check_domain = False
+        if self.check_domain:
+            try:
+                self.site = Site.objects.get(domain=RequestSite(request).domain)
+            except:
+                self.site = Site.objects.get(pk=1)
+        else:
+            try:
+                self.site = Site.objects.get_current()
+            except:
+                self.site = Site.objects.get(pk=1)
     
     def is_homepage(self):
         try:
