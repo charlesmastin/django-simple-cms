@@ -46,7 +46,7 @@ class NavigationView(View):
 
 class ArticleListView(ListView):
 
-    def get_context_data(self, *kwargs):
+    def get_context_data(self, **kwargs):
         context = super(ArticleListView, self).get_context_data(**kwargs)
         context['article_search_form'] = ArticleSearchForm()
         return context
