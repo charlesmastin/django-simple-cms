@@ -12,6 +12,7 @@ from simple_cms.forms import ArticleSearchForm
 
 
 class NavigationView(View):
+    template_name = settings.SIMPLE_CMS_PAGE_TEMPLATE
 
     def post(self, request, *args, **kwargs):
         return self._handler(request, *args, **kwargs)
@@ -20,7 +21,6 @@ class NavigationView(View):
         return self._handler(request, *args, **kwargs)
 
     def _handler(self, request, *args, **kwargs):
-        self.template = settings.SIMPLE_CMS_PAGE_TEMPLATE
         context = RequestContext(request, {})
         if context['page'] and context['exact_match']:
             if context['page'].redirect_url:
@@ -35,12 +35,12 @@ class NavigationView(View):
                     cls = get_callable(context['page'].view)
                     return cls(request)
             if context['page'].template:
-                self.template = context['page'].template
+                self.template_name = context['page'].template
             elif context['page'].inherit_template:
                 for i in context['pageA']:
                     if i.template:
-                        self.template = i.template
-            return render(request, self.template, {}, context_instance=context)
+                        self.template_name = i.template
+            return render(request, self.template_name, {}, context_instance=context)
         raise Http404
 
 
