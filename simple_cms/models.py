@@ -9,7 +9,6 @@ from django.contrib.sites.models import Site
 from django_extensions.db.fields import CreationDateTimeField
 from django_extensions.db.fields import ModificationDateTimeField
 from django_extensions.db.fields import AutoSlugField
-from django_countries import CountryField
 from taggit.managers import TaggableManager
 from positions.fields import PositionField
 
