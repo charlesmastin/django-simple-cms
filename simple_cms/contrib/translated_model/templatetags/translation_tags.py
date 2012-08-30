@@ -17,9 +17,13 @@ def translate_instance(context, instance):
                 translation = translations[0]
                 for field in translation.__class__._meta.get_all_field_names():
                     if field in instance.__class__._meta.get_all_field_names():
-                        v = getattr(translation, field)
-                        if v != translation.__class__._meta.get_field(field).default:
-                            setattr(instance, field, v)
+                        # base model won't have the related generic name, and might not extend CommonAbstractModel
+                        try:
+                            v = getattr(translation, field)
+                            if v != translation.__class__._meta.get_field(field).default:
+                                setattr(instance, field, v)
+                        except AttributeError:
+                            pass
     except KeyError:
         pass
     return instance
