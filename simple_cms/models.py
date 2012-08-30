@@ -31,7 +31,6 @@ class CommonAbstractManager(models.Manager):
     def get_active(self):
         return self.get_query_set().filter(active=True)
 
-
 class TextMixin(object):
     def get_text_block(self):
         return {
@@ -39,7 +38,6 @@ class TextMixin(object):
             'format': self.format,
             'render_as_template': self.render_as_template,
         }
-
 
 class UrlMixin(object):
     @property
@@ -51,7 +49,6 @@ class UrlMixin(object):
             r = r+'href="%s"' % self.url
             return mark_safe(r)
         return mark_safe(r)
-
 
 class CommonAbstractModel(models.Model):
     """
@@ -70,7 +67,6 @@ class CommonAbstractModel(models.Model):
     
     def get_class_name(self):
         return self.__class__.__name__
-
 
 class Seo(models.Model):
     title = models.CharField(max_length=255, blank=True, default='', help_text='Complete html title replacement')
@@ -96,7 +92,6 @@ class BlockGroup(models.Model):
     def __unicode__(self):
         return self.title
 
-
 class Block(TextMixin, UrlMixin, CommonAbstractModel):
     key = models.CharField(max_length=255, unique=True, help_text='Internal name to refer to this item')
     title = models.CharField(max_length=255, blank=True, help_text='Optional header on sidebar')
@@ -113,7 +108,6 @@ class Block(TextMixin, UrlMixin, CommonAbstractModel):
     
     def __unicode__(self):
         return '%s' % (self.key)
-
 
 class RelatedBlock(CommonAbstractModel):
     """ Linking Blocks to any object """
@@ -267,7 +261,6 @@ class Navigation(TextMixin, CommonAbstractModel):
     def search_description(self):
         return self.text
 
-
 class Category(CommonAbstractModel):
     title = models.CharField(max_length=255)
     slug = AutoSlugField(editable=True, populate_from='title')
@@ -281,7 +274,6 @@ class Category(CommonAbstractModel):
     
     def __unicode__(self):
         return self.title
-
 
 class Article(TextMixin, UrlMixin, CommonAbstractModel):
     title = models.CharField(max_length=255)

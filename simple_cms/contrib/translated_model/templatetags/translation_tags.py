@@ -1,7 +1,7 @@
 from django.utils.safestring import mark_safe
 
 from simple_cms.contrib.translated_model.models import LocalizationTranslation
-
+from simple_cms.models import CommonAbstractModel
 from django import template
 register = template.Library()
 
@@ -15,15 +15,19 @@ def translate_instance(context, instance):
             if len(translations):
                 # map the non empty values on to the original instance
                 translation = translations[0]
+                # TODO: find out how to properly obtain the base classes up to models.Model and exclude all of their fields
+                # TODO: find out how to properly obtain the PK fieldname
+                excluded = CommonAbstractModel._meta.get_all_field_names() + ['id']
                 for field in translation.__class__._meta.get_all_field_names():
-                    if field in instance.__class__._meta.get_all_field_names():
-                        # base model won't have the related generic name, and might not extend CommonAbstractModel
-                        try:
-                            v = getattr(translation, field)
-                            if v != translation.__class__._meta.get_field(field).default:
-                                setattr(instance, field, v)
-                        except AttributeError:
-                            pass
+                    if field not in excluded:
+                        if field in instance.__class__._meta.get_all_field_names():
+                            # also avoid reverse mapping generic name - kinda hard to exclude
+                            try:
+                                v = getattr(translation, field)
+                                if v != translation.__class__._meta.get_field(field).default:
+                                    setattr(instance, field, v)
+                            except AttributeError:
+                                pass
     except KeyError:
         pass
     return instance
