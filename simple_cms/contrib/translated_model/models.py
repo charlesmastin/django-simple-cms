@@ -8,11 +8,18 @@ from simple_cms.models import CommonAbstractModel
 class Language(CommonAbstractModel):
     name = models.CharField(max_length=255, unique=True)
     code = models.CharField(max_length=10, unique=True)
+    display_name = models.CharField(max_length=255, blank=True, default='')
     order = PositionField()
     
     class Meta:
         ordering = ['order']
     
+    @property
+    def title(self):
+        if self.display_name:
+            return self.display_name
+        return self.name
+
     def __unicode__(self):
         return self.name
 
