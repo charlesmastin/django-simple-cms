@@ -11,32 +11,40 @@ def get_default_language():
     # TODO: check on custom overrides, or future Language based default settings
     return settings.LANGUAGE_CODE
 
+def _translate_instance(instance, code):
+    try:
+        translations = instance.translations.filter(language__code=code)
+        if len(translations):
+            # map the non empty values on to the original instance
+            translation = translations[0]
+            # TODO: find out how to properly obtain the base classes up to models.Model and exclude all of their fields
+            # TODO: find out how to properly obtain the PK fieldname
+            excluded = CommonAbstractModel._meta.get_all_field_names() + ['id']
+            for field in translation.__class__._meta.get_all_field_names():
+                if field not in excluded:
+                    if field in instance.__class__._meta.get_all_field_names():
+                        # also avoid reverse mapping generic name - kinda hard to exclude
+                        try:
+                            v = getattr(translation, field)
+                            if v != translation.__class__._meta.get_field(field).default:
+                                setattr(instance, field, v)
+                        except AttributeError:
+                            pass
+    except AttributeError:
+        pass
+
+@register.assignment_tag
+def translate_instance_with_code(instance, code):
+    _translate_instance(instance, code)
+    return instance
+
 @register.assignment_tag(takes_context=True)
 def translate_instance(context, instance):
     try:
         code = context['request'].LANGUAGE_CODE
         if code != get_default_language():
             # now try to find a translation
-            try:
-                translations = instance.translations.filter(language__code=code)
-                if len(translations):
-                    # map the non empty values on to the original instance
-                    translation = translations[0]
-                    # TODO: find out how to properly obtain the base classes up to models.Model and exclude all of their fields
-                    # TODO: find out how to properly obtain the PK fieldname
-                    excluded = CommonAbstractModel._meta.get_all_field_names() + ['id']
-                    for field in translation.__class__._meta.get_all_field_names():
-                        if field not in excluded:
-                            if field in instance.__class__._meta.get_all_field_names():
-                                # also avoid reverse mapping generic name - kinda hard to exclude
-                                try:
-                                    v = getattr(translation, field)
-                                    if v != translation.__class__._meta.get_field(field).default:
-                                        setattr(instance, field, v)
-                                except AttributeError:
-                                    pass
-            except AttributeError:
-                pass
+            _translate_instance(instance, code)
     except KeyError:
         pass
     return instance
