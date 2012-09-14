@@ -32,10 +32,11 @@ def _translate_instance(instance, code):
                             pass
     except AttributeError:
         pass
+    return instance
 
 @register.assignment_tag
 def translate_instance_with_code(instance, code):
-    _translate_instance(instance, code)
+    instance = _translate_instance(instance, code)
     return instance
 
 @register.assignment_tag(takes_context=True)
@@ -43,8 +44,7 @@ def translate_instance(context, instance):
     try:
         code = context['request'].LANGUAGE_CODE
         if code != get_default_language():
-            # now try to find a translation
-            _translate_instance(instance, code)
+            instance = _translate_instance(instance, code)
     except KeyError:
         pass
     return instance
@@ -72,7 +72,7 @@ def translate_field(context, instance, field):
     return getattr(instance, field)
 
 @register.simple_tag(takes_context=True)
-def translate_string(context, key, default):
+def translate_string(context, key, default=''):
     try:
         return mark_safe(LocalizationTranslation.objects.get(localization__name=key, language__code=context['request'].LANGUAGE_CODE).text)
     except LocalizationTranslation.DoesNotExist:
