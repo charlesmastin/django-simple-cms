@@ -27,7 +27,14 @@ class NavNode(template.Node):
         self.var_name = var_name
     
     def render(self, context):
-        nav = Navigation.objects.get_active().filter(site=Site.objects.get_current(), group__title=self.group.resolve(context)).order_by('order')
+        kwargs = {'group__title':self.group.resolve(context)}
+        try:
+            check_domain = settings.SIMPLE_CMS_CHECK_DOMAIN
+        except:
+            check_domain = False
+        if check_domain:
+            kwargs['site'] = Site.objects.get_current()
+        nav = Navigation.objects.get_active().filter(**kwargs).order_by('order')
         context[self.var_name] = nav
         return ''
 

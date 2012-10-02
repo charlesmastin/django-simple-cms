@@ -35,7 +35,10 @@ class NavigationHelper(object):
         try:
             if self.urlA[0] == '':
                 try:
-                    self.page = Navigation.objects.get(active=True, site=self.site, homepage=True)
+                    kwargs = {'active':True, 'homepage':True}
+                    if self.check_domain and self.site:
+                        kwargs['site'] = self.site
+                    self.page = Navigation.objects.get(**kwargs)
                     self.pageA.append(self.page)
                     self.exact_match = True
                     return True
@@ -48,7 +51,10 @@ class NavigationHelper(object):
     def find_page(self):
         for slug in self.urlA:
             try:
-                self.page = Navigation.objects.get(active=True, parent=self.page, slug=slug, site=self.site)
+                kwargs = {'active':True, 'parent':self.page, 'slug':slug}
+                if self.check_domain and self.site:
+                    kwargs['site'] = self.site
+                self.page = Navigation.objects.get(**kwargs)
                 self.pageA.append(self.page)
             except Navigation.DoesNotExist:
                 break

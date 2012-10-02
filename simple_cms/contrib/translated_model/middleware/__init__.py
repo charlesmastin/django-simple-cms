@@ -4,6 +4,34 @@ from django.conf import settings
 
 from simple_cms.contrib.translated_model.models import Language
 
+def detect_language(request):
+    language_code = settings.DEFAULT_LANGUAGE
+    language = None
+    try:
+        locales = parse_accept_lang_header(request.META['HTTP_ACCEPT_LANGUAGE'])
+        # try to find a match. Check first item primarily
+        for locale in locales:
+            if not language:
+                # check for presense of - (do we have full locale or just language)
+                if locale[0].rfind('-') == -1:
+                    try:
+                        language = Language.objects.get(active=True, code__istartswith=locale[0])
+                        language_code = language.code
+                    except Language.DoesNotExist:
+                        pass
+                else:
+                    try:
+                        language = Language.objects.get(active=True, code__iexact=locale[0])
+                        language_code = language.code
+                    except Language.DoesNotExist:
+                        pass
+    except KeyError:
+        pass
+    return {
+        'code': language_code,
+        'language': language,
+    }
+
 class LanguageMiddleware(object):
     """
     Transparently check and set language preference...
@@ -27,26 +55,5 @@ class LanguageMiddleware(object):
                 pass
         else:
             # if no session, do we have browser locale?
-            request.LANGUAGE_CODE = settings.DEFAULT_LANGUAGE
-            try:
-                locales = parse_accept_lang_header(request.META['HTTP_ACCEPT_LANGUAGE'])
-                # try to find a match. Check first item primarily
-                language = None
-                for locale in locales:
-                    if not language:
-                        # check for presense of - (do we have full locale or just language)
-                        if locale[0].rfind('-') == -1:
-                            try:
-                                language = Language.objects.get(active=True, code__istartswith=locale[0])
-                                request.LANGUAGE_CODE = language.code
-                            except Language.DoesNotExist:
-                                pass
-                        else:
-                            try:
-                                language = Language.objects.get(active=True, code__iexact=locale[0])
-                                request.LANGUAGE_CODE = language.code
-                            except Language.DoesNotExist:
-                                pass
-            except KeyError:
-                pass
+            request.LANGUAGE_CODE = detect_language(request)['code']
             request.session['language'] = request.LANGUAGE_CODE
