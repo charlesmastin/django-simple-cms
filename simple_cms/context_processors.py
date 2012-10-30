@@ -49,9 +49,19 @@ class NavigationHelper(object):
         return False
     
     def find_page(self):
+        admin_preview = False
+        try:
+            admin_preview = self.request.GET.get('admin_preview')
+            if admin_preview:
+                if not self.request.user.is_authenticated or not self.request.user.is_staff:
+                    return
+        except KeyError:
+            pass
         for slug in self.urlA:
             try:
-                kwargs = {'active':True, 'parent':self.page, 'slug':slug}
+                kwargs = {'active': True, 'parent':self.page, 'slug':slug}
+                if admin_preview:
+                    del kwargs['active']
                 if self.check_domain and self.site:
                     kwargs['site'] = self.site
                 self.page = Navigation.objects.get(**kwargs)
