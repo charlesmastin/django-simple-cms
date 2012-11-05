@@ -13,7 +13,7 @@ def get_default_language():
 
 def _translate_instance(instance, code):
     try:
-        translations = instance.translations.filter(language__code=code)
+        translations = instance.translations.filter(language__code=code, active=True)
         if len(translations):
             # map the non empty values on to the original instance
             translation = translations[0]
@@ -60,7 +60,7 @@ def translate_field(context, instance, field):
         if code != get_default_language():
             # now try to find a translation
             try:
-                translations = instance.translations.filter(language__code=code)
+                translations = instance.translations.filter(language__code=code, active=True)
                 if len(translations):
                     p = getattr(translations[0], field)
                     if len(p):
