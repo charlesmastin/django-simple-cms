@@ -25,17 +25,14 @@ class NavigationForm(forms.ModelForm):
     class Meta:
         model = Navigation
 
-
 class SeoInline(generic.GenericStackedInline):
     model = Seo
     extra = 0
     max_num = 1
 
-
 class RelatedBlockInline(generic.GenericTabularInline):
     model = RelatedBlock
     extra = 0
-
 
 class NavigationAdmin(admin.ModelAdmin):
     form = NavigationForm
@@ -71,7 +68,6 @@ class NavigationAdmin(admin.ModelAdmin):
         }),
     )
 
-
 class BlockAdmin(admin.ModelAdmin):
     list_display = ('key', 'title', 'url', 'image', 'format')
     #list_filter = ('format', )
@@ -99,13 +95,11 @@ class BlockAdmin(admin.ModelAdmin):
         }),
     )
 
-
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ['title', 'parent', 'order', 'active']
     list_filter = ['active']
     prepopulated_fields = {'slug': ('title',)}
     actions = [action_set_active, action_set_inactive]
-
 
 class CategoryInline(admin.TabularInline):
     model = Article.categories.through
@@ -123,7 +117,7 @@ class ArticleForm(forms.ModelForm):
 class ArticleAdmin(admin.ModelAdmin):
     form = ArticleForm
     list_display = ['title', 'post_date', 'has_excerpt', 'key_image', 'active']
-    list_filter = ['active', 'post_date']
+    list_filter = ['active', 'post_date', 'categories']
     date_hierarchy = 'post_date'
     prepopulated_fields = {'slug': ('title',)}
     save_on_top = True
