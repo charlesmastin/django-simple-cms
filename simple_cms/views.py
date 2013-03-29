@@ -43,14 +43,12 @@ class NavigationView(View):
             return render(request, self.template_name, {}, context_instance=context)
         raise Http404
 
-
 class ArticleListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super(ArticleListView, self).get_context_data(**kwargs)
         context['article_search_form'] = ArticleSearchForm()
         return context
-
 
 class ArticleDetailView(DateDetailView):
 
@@ -60,7 +58,6 @@ class ArticleDetailView(DateDetailView):
         if len(self.object.seo.all()) == 1:
             context.update({'seo': self.object.seo.all()[0]})
         return context
-
 
 class ArticleTagView(ListView):
 
@@ -90,7 +87,6 @@ class ArticleCategoryView(ListView):
         context.update({'category': self.category})
         return context
 
-
 class ArticleSearchView(ListView):
 
     def get(self, request, *args, **kwargs):
@@ -98,7 +94,7 @@ class ArticleSearchView(ListView):
         return super(ArticleSearchView, self).get(self, request, *args, **kwargs)
 
     def get_queryset(self):
-        articles = None
+        articles = []
         if self.form.is_valid():
             keywords = self.form.cleaned_data['q']
             articles = Article.objects.get_active()
