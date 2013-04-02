@@ -116,9 +116,9 @@ class ArticleForm(forms.ModelForm):
 
 class ArticleAdmin(admin.ModelAdmin):
     form = ArticleForm
-    list_display = ['title', 'post_date', 'has_excerpt', 'key_image', 'active']
-    list_filter = ['active', 'post_date', 'categories']
-    date_hierarchy = 'post_date'
+    list_display = ['title', 'publish_start', 'publish_end', 'key_image', 'active']
+    list_filter = ['active', 'categories']
+    #date_hierarchy = 'post_date'
     prepopulated_fields = {'slug': ('title',)}
     save_on_top = True
     search_fields = ['title', 'text', 'excerpt']
@@ -128,7 +128,8 @@ class ArticleAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
             'fields': (
-                ('active', 'post_date'),
+                'active',
+                'post_date',
                 ('title', 'slug'),
                 'key_image',
                 'text',
@@ -140,6 +141,8 @@ class ArticleAdmin(admin.ModelAdmin):
         ('Advanced Options', {
             'classes': ('collapse',),
             'fields': (
+                'publish_start',
+                'publish_end',
                 'excerpt',
                 'render_as_template',
                 ('url', 'target'),

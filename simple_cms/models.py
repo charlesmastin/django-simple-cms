@@ -1,3 +1,5 @@
+import datetime
+
 from django.db import models
 from django.utils.safestring import mark_safe
 from django.utils.encoding import *
@@ -5,6 +7,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
+from django.db.models import Q
+
+from django.conf import settings
 
 from django_extensions.db.fields import CreationDateTimeField
 from django_extensions.db.fields import ModificationDateTimeField
@@ -188,14 +193,14 @@ class Navigation(TextMixin, CommonAbstractModel):
 
     def custom_template(self):
         if self.template:
-            return '<img src="/media/img/admin/icon-yes.gif" alt="yes" title="%s">' % self.template
+            return '<img src="%sadmin/img/icon-yes.gif" alt="yes" title="%s">' % (settings.STATIC_URL, self.template)
         return ''
     custom_template.allow_tags = True
     custom_template.admin_order_field = 'template'
     
     def custom_view(self):
         if self.view:
-            return '<img src="/media/img/admin/icon-yes.gif" alt="yes" title="%s">' % self.view
+            return '<img src="%sadmin/img/icon-yes.gif" alt="yes" title="%s">' % (settings.STATIC_URL, self.view)
         return ''
     custom_view.allow_tags = True
     custom_view.admin_order_field = 'view'
@@ -275,11 +280,17 @@ class Category(CommonAbstractModel):
     def __unicode__(self):
         return self.title
 
+class PublishedManager(CommonAbstractManager):
+
+    def get_published(self):
+        return self.get_active().filter(Q(publish_start__lte=datetime.datetime.now(), publish_end=None) | Q(publish_start__lte=datetime.datetime.now(), publish_end__gte=datetime.datetime.now()))
+
 class Article(TextMixin, UrlMixin, CommonAbstractModel):
     title = models.CharField(max_length=255)
     slug = AutoSlugField(editable=True, populate_from='title')
-    post_date = models.DateTimeField(editable=True)
-    text = models.TextField()
+    # default to now
+    post_date = CreationDateTimeField(editable=True, help_text='Display Date')#models.DateTimeField(auto_now_add=True, editable=True, blank=True, help_text='Display Date')
+    text = models.TextField(blank=True, default='')
     format = models.CharField(max_length=255, blank=True, default='', choices=FORMAT_CHOICES)
     render_as_template = models.BooleanField(default=False)
     excerpt = models.TextField(blank=True, default='')
@@ -292,8 +303,14 @@ class Article(TextMixin, UrlMixin, CommonAbstractModel):
     url = models.CharField(max_length=255, blank=True, default='', help_text='eg. link somewhere else http://awesome.com/ or /awesome/page/')
     target = models.CharField(max_length=255, blank=True, default='', help_text='eg. open link in "_blank" window', choices=TARGET_CHOICES)
     display_title = models.BooleanField(default=True, help_text='Display title on list view?')
+    publish_start = CreationDateTimeField(editable=True, help_text='Show active content starting at this time.')
+    publish_end = models.DateTimeField(null=True, blank=True, help_text='Stop publishing active content at the time.')
+    objects = PublishedManager()
+
     seo = generic.GenericRelation(Seo)
     blocks = generic.GenericRelation(RelatedBlock)
+
+    
     
     class Meta:
         ordering = ['-post_date']
@@ -303,8 +320,8 @@ class Article(TextMixin, UrlMixin, CommonAbstractModel):
     
     def has_excerpt(self):
         if self.excerpt != '':
-            return '<img src="/media/img/admin/icon-yes.gif" alt="True">'
-        return '<img src="/media/img/admin/icon-no.gif" alt="False">'
+            return '<img src="%sadmin/img/icon-yes.gif" alt="True">' % settings.STATIC_URL
+        return '<img src="%sadmin/img/icon-no.gif" alt="False">' % settings.STATIC_URL
     
     has_excerpt.admin_order_field = 'excerpt'
     has_excerpt.allow_tags = True
