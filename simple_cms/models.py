@@ -86,7 +86,7 @@ class Seo(models.Model):
         verbose_name_plural = 'Seo'
     
     def __unicode__(self):
-        return '%s' % self.id
+        return u'%s' % self.id
 
 class BlockGroup(models.Model):
     title = models.CharField(max_length=255)
@@ -95,7 +95,7 @@ class BlockGroup(models.Model):
         ordering = ('title',)
     
     def __unicode__(self):
-        return self.title
+        return u'%s' % self.title
 
 class Block(TextMixin, UrlMixin, CommonAbstractModel):
     key = models.CharField(max_length=255, unique=True, help_text='Internal name to refer to this item')
@@ -112,7 +112,7 @@ class Block(TextMixin, UrlMixin, CommonAbstractModel):
     content_object = generic.GenericForeignKey('content_type', 'object_id')
     
     def __unicode__(self):
-        return '%s' % (self.key)
+        return u'%s' % (self.key)
 
 class RelatedBlock(CommonAbstractModel):
     """ Linking Blocks to any object """
@@ -134,7 +134,7 @@ class RelatedBlock(CommonAbstractModel):
         ordering = ['order', ]
 
     def __unicode__(self):
-        return '%s - %s' % (force_unicode(self.content_object), self.block)
+        return u'%s - %s' % (self.content_object, self.block)
 
 class NavigationGroup(models.Model):
     title = models.CharField(max_length=255)
@@ -143,7 +143,7 @@ class NavigationGroup(models.Model):
         ordering = ('title',)
     
     def __unicode__(self):
-        return '%s' % self.title
+        return u'%s' % self.title
 
 class Navigation(TextMixin, CommonAbstractModel):
     """
@@ -178,7 +178,7 @@ class Navigation(TextMixin, CommonAbstractModel):
         verbose_name_plural = 'Navigation'
 
     def __unicode__(self):
-        return '%s' % self._chain()
+        return u'%s' % self._chain()
 
     def clean(self):
         from django.core.exceptions import ValidationError
@@ -278,7 +278,7 @@ class Category(CommonAbstractModel):
         verbose_name_plural = 'Categories'
     
     def __unicode__(self):
-        return self.title
+        return u'%s' % self.title
 
 class PublishedManager(CommonAbstractManager):
 
@@ -316,7 +316,7 @@ class Article(TextMixin, UrlMixin, CommonAbstractModel):
         ordering = ['-post_date']
     
     def __unicode__(self):
-        return self.title
+        return u'%s' % self.title
     
     def has_excerpt(self):
         if self.excerpt != '':
@@ -349,7 +349,7 @@ class Venue(CommonAbstractModel):
         ordering = ['name']
     
     def __unicode__(self):
-        return '%s' % self.name
+        return u'%s' % self.name
     
     @property
     def map_address(self):
@@ -398,7 +398,7 @@ class Event(TextMixin, CommonAbstractModel):
         ordering = ['start_datetime', 'end_datetime']
     
     def __unicode__(self):
-        return '%s' % (self.pk)
+        return u'%s' % (self.pk)
     
     @property
     def is_past(self):

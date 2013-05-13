@@ -21,7 +21,7 @@ class Language(CommonAbstractModel):
         return self.name
 
     def __unicode__(self):
-        return self.name
+        return u'%s' % self.name
 
 class Translation(CommonAbstractModel):
     language = models.ForeignKey(Language)
@@ -40,7 +40,7 @@ class Localization(models.Model):
         ordering = ['name']
     
     def __unicode__(self):
-        return self.name
+        return u'%s' % self.name
 
 class LocalizationTranslation(models.Model):
     language = models.ForeignKey(Language)
@@ -51,4 +51,4 @@ class LocalizationTranslation(models.Model):
         unique_together = ('language', 'localization')
     
     def __unicode__(self):
-        return self.text
+        return u'%s' % self.text
