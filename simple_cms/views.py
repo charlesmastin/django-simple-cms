@@ -51,12 +51,28 @@ class ArticleListView(ListView):
         return context
 
 class ArticleDetailView(DateDetailView):
+    fetch_sequence = True
 
     def get_context_data(self, **kwargs):
         context = super(ArticleDetailView, self).get_context_data(**kwargs)
         #context['article_search_form'] = ArticleSearchForm()
         if len(self.object.seo.all()) == 1:
             context.update({'seo': self.object.seo.all()[0]})
+        if self.fetch_sequence:
+            # grab sequence of id, then find
+            ids = Article.objects.get_active().values_list('id', flat=True)
+            # generator?
+            for i, _id in enumerate(ids):
+                if self.object.pk == _id:
+                    try:
+                        context.update({'previous_article': Article.objects.get(pk=ids[i+1])})
+                    except:
+                        pass
+                    try:
+                        context.update({'next_article': Article.objects.get(pk=ids[i-1])})
+                    except:
+                        pass
+                    break
         return context
 
 class ArticleTagView(ListView):
@@ -107,5 +123,20 @@ class ArticleSearchView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super(ArticleSearchView, self).get_context_data(**kwargs)
+        context['query'] = self.form.cleaned_data['q']
         context['article_search_form'] = self.form
+        return context
+
+class ArticleYearView(ListView):
+
+    def get(self, request, *args, **kwargs):
+        self.year = kwargs['year']
+        return super(ArticleYearView, self).get(self, request, *args, **kwargs)
+
+    def get_queryset(self):
+        return Article.objects.get_active().filter(post_date__year=self.year)
+
+    def get_context_data(self, **kwargs):
+        context = super(ArticleYearView, self).get_context_data(**kwargs)
+        context.update({'year': self.year})
         return context

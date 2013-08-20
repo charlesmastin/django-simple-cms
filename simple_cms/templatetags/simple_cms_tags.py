@@ -3,7 +3,7 @@ from django.template import Node
 from django.contrib.sites.models import Site
 from django.contrib.contenttypes.models import ContentType
 
-from simple_cms.models import Navigation, Block, Article
+from simple_cms.models import Navigation, Block, Article, Category
 from simple_cms.forms import ArticleSearchForm
 
 register = template.Library()
@@ -61,7 +61,6 @@ class BlockNode(template.Node):
         context[self.var_name] = block
         return ''
 
-
 @register.tag
 def get_block(parser, token):
     try:
@@ -72,15 +71,11 @@ def get_block(parser, token):
     bits = arg.split()
     return BlockNode(bits[0], bits[2])
 
-
 @register.filter
 def render_as_template(value, request):
     t = template.Template(value)
     c = template.Context(template.RequestContext(request))
     return t.render(c)
-
-
-
 
 class NavigationBlocksNode(template.Node):
     
@@ -127,7 +122,6 @@ class NavigationBlocksNode(template.Node):
         context[self.var_name] = blocks
         return ''
 
-
 @register.tag
 def get_blocks(parser, token):
     """
@@ -148,7 +142,6 @@ def get_blocks(parser, token):
     
     raise TemplateSyntaxError, "get_blocks for nav [group] as varname"
     
-
 class ArticleSearchFormNode(template.Node):
     def __init__(self, var_name):
         self.var_name = var_name
@@ -156,7 +149,6 @@ class ArticleSearchFormNode(template.Node):
     def render(self, context):
         context[self.var_name] = ArticleSearchForm()
         return ''
-
 
 @register.tag
 def get_article_search_form(parser, token):
@@ -188,3 +180,10 @@ def get_articles_for_category(category, length=None):
     articles = Article.objects.get_active().filter(category__slug__in=[category])
     return get_articles(articles, length)
 
+@register.assignment_tag
+def get_article_categories():
+    return Category.objects.get_active().exclude(articles=None)
+
+@register.assignment_tag
+def get_article_years():
+    return Article.objects.get_active().dates('post_date', 'year').reverse()
