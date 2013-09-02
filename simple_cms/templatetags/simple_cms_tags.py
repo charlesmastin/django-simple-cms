@@ -2,6 +2,7 @@ from django import template
 from django.template import Node
 from django.contrib.sites.models import Site
 from django.contrib.contenttypes.models import ContentType
+from django.conf import settings
 
 from simple_cms.models import Navigation, Block, Article, Category
 from simple_cms.forms import ArticleSearchForm
@@ -21,55 +22,22 @@ def page_url(context, id):
     except Navigation.DoesNotExist:
         return ''
 
-class NavNode(template.Node):
-    def __init__(self, group, var_name):
-        self.group = template.Variable(group)
-        self.var_name = var_name
-    
-    def render(self, context):
-        kwargs = {'group__title':self.group.resolve(context)}
-        try:
-            check_domain = settings.SIMPLE_CMS_CHECK_DOMAIN
-        except:
-            check_domain = False
-        if check_domain:
-            kwargs['site'] = Site.objects.get_current()
-        nav = Navigation.objects.get_active().filter(**kwargs).order_by('order')
-        context[self.var_name] = nav
-        return ''
-
-@register.tag
-def get_nav_by_group(parser, token):
+@register.assignment_tag
+def get_nav_by_group(group_name):
+    kwargs = {'group__title': group_name}
     try:
-        tag_name, arg = token.contents.split(None, 1)
-        args = arg.split()
-    except ValueError:
-        raise template.TemplateSyntaxError, 'syntax error'
-    #m = re.search(r'(.*?) as (\w+)', arg)
-    return NavNode(args[0], args[2])
+        check_domain = settings.SIMPLE_CMS_CHECK_DOMAIN
+        kwargs['site'] = Site.objects.get_current()
+    except:
+        pass
+    return Navigation.objects.get_active().filter(**kwargs).order_by('order')
 
-class BlockNode(template.Node):
-    def __init__(self, key, var_name):
-        self.key = template.Variable(key)
-        self.var_name = var_name
-    
-    def render(self, context):
-        try:
-            block = Block.objects.get(key=self.key.resolve(context))
-        except Block.DoesNotExist:
-            block = None
-        context[self.var_name] = block
-        return ''
-
-@register.tag
-def get_block(parser, token):
+@register.assignment_tag
+def get_block(key):
     try:
-        tag_name, arg = token.contents.split(None, 1)
-    except ValueError:
-        raise template.TemplateSyntaxError, "%r tag requires arguments" % \
-                token.contents.split()[0]
-    bits = arg.split()
-    return BlockNode(bits[0], bits[2])
+        return Block.objects.get(key=key)
+    except:
+        return
 
 @register.filter
 def render_as_template(value, request):
