@@ -27,7 +27,8 @@ def get_nav_by_group(group_name):
     kwargs = {'group__title': group_name}
     try:
         check_domain = settings.SIMPLE_CMS_CHECK_DOMAIN
-        kwargs['site'] = Site.objects.get_current()
+        if check_domain:
+            kwargs['site'] = Site.objects.get_current()
     except:
         pass
     return Navigation.objects.get_active().filter(**kwargs).order_by('order')
