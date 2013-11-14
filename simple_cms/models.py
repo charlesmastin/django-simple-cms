@@ -271,6 +271,7 @@ class Category(CommonAbstractModel):
     slug = AutoSlugField(editable=True, populate_from='title')
     order = PositionField(collection='parent')
     parent = models.ForeignKey('self', blank=True, null=True)
+    description = models.TextField(blank=True, default='')
     
     class Meta:
         ordering = ['title']
