@@ -11,7 +11,7 @@ except ImportError:
 
 setup(
     name='django-simple-cms',
-    version='0.3.30',
+    version='0.3.31',
     description='Simple CMS for your django powered website',
     author='Charles Mastin',
     author_email='charles@bricksf.com',
@@ -26,9 +26,6 @@ setup(
     ],
     packages=find_packages(),
     zip_safe=False,
-    dependency_links = [
-        'https://github.com/jpwatts/django-positions/tarball/master#egg=django-positions',
-    ],
     install_requires=[
         'django',
         'django-extensions',

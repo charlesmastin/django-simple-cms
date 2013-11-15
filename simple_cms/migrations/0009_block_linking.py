@@ -7,32 +7,53 @@ from django.db import models
 from simple_cms.models import *
 from django.contrib.contenttypes.models import ContentType
 
-# Just for the purpose of running the migration. Awesome
-NavigationBlocks = type('NavigationBlocks', (models.Model,), {
-    "__module__": "simple_cms.models",
-    "navigation": models.ForeignKey('simple_cms.Navigation'),
-    "block": models.ForeignKey('simple_cms.Block'),
-    "group": models.ForeignKey('simple_cms.BlockGroup', blank=True, null=True),
-    "order": models.IntegerField(),
-    "active": models.BooleanField(),
-    "created_at": models.DateTimeField(),
-    "updated_at": models.DateTimeField(),
-})
-
 class Migration(DataMigration):
 
     def forwards(self, orm):
-        for item in NavigationBlocks.objects.all():
-            n = RelatedBlock()
-            n.updated_at = item.updated_at
-            n.created_at = item.created_at
-            n.active = item.active
-            n.block = item.block
-            n.order = item.order
-            n.group = item.group
-            n.content_type = ContentType.objects.get_for_model(Navigation)
-            n.object_id = item.navigation.pk
-            n.save()
+        # if we have a table, and it has content in it, run this
+
+        try:
+            # Just for the purpose of running the migration. Awesome
+            NavigationBlocks = type('NavigationBlocks', (models.Model,), {
+                "__module__": "simple_cms.models",
+                "navigation": models.ForeignKey('simple_cms.Navigation'),
+                "block": models.ForeignKey('simple_cms.Block'),
+                "group": models.ForeignKey('simple_cms.BlockGroup', blank=True, null=True),
+                "order": models.IntegerField(),
+                "active": models.BooleanField(),
+                "created_at": models.DateTimeField(),
+                "updated_at": models.DateTimeField(),
+            })
+
+            for item in NavigationBlocks.objects.all():
+                n = RelatedBlock()
+                n.updated_at = item.updated_at
+                n.created_at = item.created_at
+                n.active = item.active
+                n.block = item.block
+                n.order = item.order
+                n.group = item.group
+                n.content_type = ContentType.objects.get_for_model(Navigation)
+                n.object_id = item.navigation.pk
+                n.save()
+
+            del NavigationBlocks
+
+            from django.db.models.loading import cache
+            try:
+                del cache.app_models['simple_cms']['navigationblocks']
+            except KeyError:
+                pass
+
+            try:
+                ContentType.models.get(app_label='simple_cms', model='navigationblocks').delete()
+            except:
+                pass
+
+        except:
+            pass
+
+        # delete the model instance
 
 
     def backwards(self, orm):
