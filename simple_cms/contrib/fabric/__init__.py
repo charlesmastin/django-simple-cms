@@ -3,7 +3,6 @@ import sys
 import datetime
 
 from django.conf import settings
-from django.core.management import setup_environ, execute_manager
 from fabric.api import *
 from fabric.contrib.console import confirm
 
