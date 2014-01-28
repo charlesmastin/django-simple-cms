@@ -5,7 +5,6 @@ from django.utils.safestring import mark_safe
 from django.utils.encoding import *
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
-from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.db.models import Q
 
@@ -302,7 +301,7 @@ class Article(TextMixin, UrlMixin, CommonAbstractModel):
     tags = TaggableManager(blank=True)
     categories = models.ManyToManyField('simple_cms.Category', blank=True, related_name='articles')
     allow_comments = models.BooleanField(default=True)
-    author = models.ForeignKey(User, blank=True, null=True)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, blank=True, null=True)
     url = models.CharField(max_length=255, blank=True, default='', help_text='eg. link somewhere else http://awesome.com/ or /awesome/page/')
     target = models.CharField(max_length=255, blank=True, default='', help_text='eg. open link in "_blank" window', choices=TARGET_CHOICES)
     display_title = models.BooleanField(default=True, help_text='Display title on list view?')
