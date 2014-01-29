@@ -155,4 +155,4 @@ def get_article_categories():
 
 @register.assignment_tag
 def get_article_years():
-    return Article.objects.get_active().dates('post_date', 'year').reverse()
+    return Article.objects.get_active().datetimes('post_date', 'year').reverse()
