@@ -57,6 +57,7 @@ class NavigationAdmin(admin.ModelAdmin):
         ('Advanced Options', {
             'classes': ('collapse',),
             'fields': (
+                'sticky',
                 'page_title',
                 'render_as_template',
                 'homepage',
