@@ -301,6 +301,7 @@ class Article(TextMixin, UrlMixin, CommonAbstractModel):
     tags = TaggableManager(blank=True)
     categories = models.ManyToManyField('simple_cms.Category', blank=True, related_name='articles')
     allow_comments = models.BooleanField(default=True)
+    sticky = models.BooleanField(default=False)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, blank=True, null=True)
     url = models.CharField(max_length=255, blank=True, default='', help_text='eg. link somewhere else http://awesome.com/ or /awesome/page/')
     target = models.CharField(max_length=255, blank=True, default='', help_text='eg. open link in "_blank" window', choices=TARGET_CHOICES)
