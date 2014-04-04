@@ -7,7 +7,7 @@ from django.db.models import Q
 from django.http import HttpResponseRedirect, HttpResponsePermanentRedirect, HttpResponseNotFound, Http404
 from django.core.urlresolvers import get_callable
 
-from simple_cms.models import Navigation, Article
+from simple_cms.models import Navigation, Article, Category
 from simple_cms.forms import ArticleSearchForm
 
 
@@ -92,11 +92,11 @@ class ArticleTagView(ListView):
 class ArticleCategoryView(ListView):
 
     def get(self, request, *args, **kwargs):
-        self.category = kwargs['slug']
+        self.category = Category.objects.get(slug=kwargs['slug'], active=True)
         return super(ArticleCategoryView, self).get(self, request, *args, **kwargs)
 
     def get_queryset(self):
-        return Article.objects.get_active().filter(categories__slug__in=[self.category])
+        return Article.objects.get_active().filter(categories__slug__in=[self.category.slug])
 
     def get_context_data(self, **kwargs):
         context = super(ArticleCategoryView, self).get_context_data(**kwargs)
