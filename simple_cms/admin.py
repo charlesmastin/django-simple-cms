@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.contrib.sites.models import Site
+from django.contrib.contenttypes.admin import GenericStackedInline, GenericTabularInline
 
 from simple_cms.models import *
 
@@ -24,13 +25,14 @@ class NavigationForm(forms.ModelForm):
 
     class Meta:
         model = Navigation
+        fields = '__all__'
 
-class SeoInline(generic.GenericStackedInline):
+class SeoInline(GenericStackedInline):
     model = Seo
     extra = 0
     max_num = 1
 
-class RelatedBlockInline(generic.GenericTabularInline):
+class RelatedBlockInline(GenericTabularInline):
     model = RelatedBlock
     extra = 0
 
@@ -113,6 +115,7 @@ class ArticleForm(forms.ModelForm):
 
     class Meta:
         model = Article
+        fields = '__all__'
 
 class ArticleAdmin(admin.ModelAdmin):
     form = ArticleForm

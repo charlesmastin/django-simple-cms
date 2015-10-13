@@ -4,7 +4,7 @@ from django.db import models
 from django.utils.safestring import mark_safe
 from django.utils.encoding import *
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.sites.models import Site
 from django.db.models import Q
 
@@ -33,7 +33,7 @@ TARGET_CHOICES = (
 class CommonAbstractManager(models.Manager):
 
     def get_active(self):
-        return self.get_query_set().filter(active=True)
+        return self.all().filter(active=True)
 
 class TextMixin(object):
     def get_text_block(self):
@@ -68,7 +68,7 @@ class CommonAbstractModel(models.Model):
         get_latest_by = 'updated_at'
         ordering = ('-updated_at', '-created_at')
         abstract = True
-    
+
     def get_class_name(self):
         return self.__class__.__name__
 
@@ -78,21 +78,21 @@ class Seo(models.Model):
     keywords = models.TextField(blank=True, default='')
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
-    content_object = generic.GenericForeignKey('content_type', 'object_id')
-    
+    content_object = GenericForeignKey('content_type', 'object_id')
+
     class Meta:
         unique_together = ['content_type', 'object_id']
         verbose_name_plural = 'Seo'
-    
+
     def __unicode__(self):
         return u'%s' % self.id
 
 class BlockGroup(models.Model):
     title = models.CharField(max_length=255)
-    
+
     class Meta:
         ordering = ('title',)
-    
+
     def __unicode__(self):
         return u'%s' % self.title
 
@@ -106,12 +106,12 @@ class Block(TextMixin, UrlMixin, CommonAbstractModel):
     url = models.CharField(max_length=255, blank=True, default='', help_text='eg. link image / title somewhere http://awesome.com/ or /awesome/page/')
     target = models.CharField(max_length=255, blank=True, default='', help_text='eg. open image / title link in "_blank" window', choices=TARGET_CHOICES)
     bypass_layout = models.BooleanField(default=False, help_text='Render only text field content, no surrounding markup.')
-    
+
     # consider ditching these - NOW
     content_type = models.ForeignKey(ContentType, blank=True, null=True, help_text="""Choose an existing item type.<br>The most common choices will be Expert, etc.""")
     object_id = models.PositiveIntegerField(blank=True, null=True, help_text="""Type in the ID of the item you want to choose. You should see the title appear beside the box.""")
-    content_object = generic.GenericForeignKey('content_type', 'object_id')
-    
+    content_object = GenericForeignKey('content_type', 'object_id')
+
     def __unicode__(self):
         return u'%s' % (self.key)
 
@@ -119,7 +119,7 @@ class RelatedBlock(CommonAbstractModel):
     """ Linking Blocks to any object """
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
-    content_object = generic.GenericForeignKey('content_type', 'object_id')
+    content_object = GenericForeignKey('content_type', 'object_id')
     block = models.ForeignKey('simple_cms.Block')
     group = models.ForeignKey('simple_cms.BlockGroup', blank=True, null=True)
     order = PositionField(collection=('content_type', 'object_id', 'group'))
@@ -129,7 +129,7 @@ class RelatedBlock(CommonAbstractModel):
     eg, objects that don't necessarily map to a page, or page hierchy so simply,
     instead using the BlockGroup to unite them
     """
-    
+
 
     class Meta:
         ordering = ['order', ]
@@ -139,10 +139,10 @@ class RelatedBlock(CommonAbstractModel):
 
 class NavigationGroup(models.Model):
     title = models.CharField(max_length=255)
-    
+
     class Meta:
         ordering = ('title',)
-    
+
     def __unicode__(self):
         return u'%s' % self.title
 
@@ -170,8 +170,8 @@ class Navigation(TextMixin, CommonAbstractModel):
     redirect_permanent = models.BooleanField(default=False)
     inherit_blocks = models.BooleanField(default=True, verbose_name="Inherit Blocks")
     inherit_template = models.BooleanField(default=False, verbose_name="Inherit Template")
-    seo = generic.GenericRelation(Seo)
-    blocks = generic.GenericRelation(RelatedBlock)
+    seo = GenericRelation(Seo)
+    blocks = GenericRelation(RelatedBlock)
 
     class Meta:
         unique_together = (('site', 'slug', 'parent'),)
@@ -185,7 +185,7 @@ class Navigation(TextMixin, CommonAbstractModel):
         from django.core.exceptions import ValidationError
         if self.parent == self:
             raise ValidationError('Can\'t set parent to self.')
-    
+
     def num_blocks(self):
         l = len(self.blocks.all())
         if l:
@@ -198,7 +198,7 @@ class Navigation(TextMixin, CommonAbstractModel):
         return ''
     custom_template.allow_tags = True
     custom_template.admin_order_field = 'template'
-    
+
     def custom_view(self):
         if self.view:
             return '<img src="%sadmin/img/icon-yes.gif" alt="yes" title="%s">' % (settings.STATIC_URL, self.view)
@@ -273,12 +273,12 @@ class Category(CommonAbstractModel):
     order = PositionField(collection='parent')
     parent = models.ForeignKey('self', blank=True, null=True)
     description = models.TextField(blank=True, default='')
-    
+
     class Meta:
         ordering = ['title']
         verbose_name = 'Category'
         verbose_name_plural = 'Categories'
-    
+
     def __unicode__(self):
         return u'%s' % self.title
 
@@ -310,25 +310,25 @@ class Article(TextMixin, UrlMixin, CommonAbstractModel):
     publish_end = models.DateTimeField(null=True, blank=True, help_text='Stop publishing active content at the time.')
     objects = PublishedManager()
 
-    seo = generic.GenericRelation(Seo)
-    blocks = generic.GenericRelation(RelatedBlock)
+    seo = GenericRelation(Seo)
+    blocks = GenericRelation(RelatedBlock)
 
-    
-    
+
+
     class Meta:
         ordering = ['-post_date']
-    
+
     def __unicode__(self):
         return u'%s' % self.title
-    
+
     def has_excerpt(self):
         if self.excerpt != '':
             return '<img src="%sadmin/img/icon-yes.gif" alt="True">' % settings.STATIC_URL
         return '<img src="%sadmin/img/icon-no.gif" alt="False">' % settings.STATIC_URL
-    
+
     has_excerpt.admin_order_field = 'excerpt'
     has_excerpt.allow_tags = True
-    
+
     def get_target(self):
         if self.target:
             return 'target="%s"' % self.target
@@ -347,13 +347,13 @@ class Venue(CommonAbstractModel):
     address_extended = models.CharField(max_length=255, blank=True, default='')
     postal_code = models.CharField(max_length=255, blank=True, default='')
     gmt_offset = models.CharField(max_length=255, blank=True, default='', help_text='Eg. -07:00')
-    
+
     class Meta:
         ordering = ['name']
-    
+
     def __unicode__(self):
         return u'%s' % self.name
-    
+
     @property
     def map_address(self):
         tA = []
@@ -396,17 +396,17 @@ class Event(TextMixin, CommonAbstractModel):
     tickets_url = models.CharField(max_length=255, blank=True, default='')
     tags = TaggableManager(blank=True)
     objects = EventManager()
-    
+
     class Meta:
         ordering = ['start_datetime', 'end_datetime']
-    
+
     def __unicode__(self):
         return u'%s' % (self.pk)
-    
+
     @property
     def is_past(self):
         now = datetime.datetime.now()
-        
+
         if self.end_datetime:
             if (self.end_datetime > now):
                 return False
@@ -415,11 +415,11 @@ class Event(TextMixin, CommonAbstractModel):
         elif self.start_datetime:
             if (self.start_datetime < now):
                 return True
-            else: 
+            else:
                 return False
-        else: 
+        else:
             return True
-    
+
     @property
     def spanning(self):
         if self.end_datetime:
