@@ -11,7 +11,7 @@ except ImportError:
 
 setup(
     name='django-simple-cms',
-    version='0.3.40',
+    version='0.3.41',
     description='Simple CMS for your django powered website',
     author='Charles Mastin',
     author_email='c@charlesmastin.com',
@@ -30,7 +30,7 @@ setup(
         'django',
         'django-extensions',
         'django-taggit',
-        'PIL',
+        'pillow',
         'django-positions',
     ],
 )
